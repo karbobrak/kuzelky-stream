@@ -208,9 +208,14 @@ func Serve(ln net.Listener, port int, a *app.App) error {
 	})
 
 	mux.HandleFunc("POST /api/youtube/prihlaseni", func(w http.ResponseWriter, r *http.Request) {
-		u, err := a.BeginLogin(fmt.Sprintf("http://127.0.0.1:%d/oauth2/callback", port))
+		u, err := a.BeginLogin(fmt.Sprintf("http://127.0.0.1:%d/oauth2/callback", port), app.LoginYouTube)
 		reply(w, map[string]any{"url": u}, err)
 	})
+	mux.HandleFunc("POST /api/cloud/prihlaseni", func(w http.ResponseWriter, r *http.Request) {
+		u, err := a.BeginLogin(fmt.Sprintf("http://127.0.0.1:%d/oauth2/callback", port), app.LoginDrive)
+		reply(w, map[string]any{"url": u}, err)
+	})
+	mux.HandleFunc("POST /api/cloud/odhlasit", func(w http.ResponseWriter, r *http.Request) { a.LogoutDrive(); reply(w, nil, nil) })
 	mux.HandleFunc("GET /oauth2/callback", s.oauthCallback)
 	mux.HandleFunc("POST /api/youtube/odhlasit", func(w http.ResponseWriter, r *http.Request) { a.Logout(); reply(w, nil, nil) })
 	mux.HandleFunc("POST /api/youtube/ukoncit-prenos", func(w http.ResponseWriter, r *http.Request) {
@@ -281,6 +286,7 @@ func (s *Server) getSettings(w http.ResponseWriter, r *http.Request) {
 	v := settingsView{Cfg: c, PassSet: c.Camera.Password != "", KeySet: c.YouTube.Key != "",
 		SecretSet: c.YouTube.ClientSecret != "", Running: s.app.Running(), FileLabel: "config.json"}
 	v.Cfg.Camera.Password, v.Cfg.YouTube.Key, v.Cfg.YouTube.ClientSecret, v.Cfg.YouTube.RefreshToken = "", "", "", ""
+	v.Cfg.Cloud.RefreshToken = ""
 	writeJSON(w, v)
 }
 
@@ -308,6 +314,7 @@ func (s *Server) readSettings(r *http.Request) (config.Config, error) {
 	c.YouTube.RefreshToken, c.YouTube.ChannelID = saved.YouTube.RefreshToken, saved.YouTube.ChannelID
 	c.YouTube.ChannelTitle, c.YouTube.StreamID = saved.YouTube.ChannelTitle, saved.YouTube.StreamID
 	c.Cloud.Scopes, c.Cloud.FolderID, c.Cloud.SheetID = saved.Cloud.Scopes, saved.Cloud.FolderID, saved.Cloud.SheetID
+	c.Cloud.RefreshToken, c.Cloud.Account = saved.Cloud.RefreshToken, saved.Cloud.Account
 	return c, nil
 }
 

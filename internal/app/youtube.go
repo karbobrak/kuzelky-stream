@@ -259,13 +259,23 @@ func (a *App) EndBroadcast(ctx context.Context) error {
 
 // ---------------------------------------------------------------- sign-in
 
+// Sign-in kinds: Google refuses YouTube and Drive scopes in one request.
+const (
+	LoginYouTube = "youtube"
+	LoginDrive   = "disk"
+)
+
 // BeginLogin returns the Google consent URL; redirect is this app's /oauth2/callback URL.
-func (a *App) BeginLogin(redirect string) (string, error) {
+func (a *App) BeginLogin(redirect, kind string) (string, error) {
 	cfg := a.Config()
 	if cfg.YouTube.ClientID == "" || cfg.YouTube.ClientSecret == "" {
-		return "", errors.New("nejdřív vyplňte a uložte Client ID a Client secret")
+		return "", errors.New("nejdřív vyplňte a uložte Client ID a Client secret (Nastavení → YouTube → Přístup k API)")
 	}
-	l := google.NewLogin(redirect)
+	scope := google.ScopeYouTube
+	if kind == LoginDrive {
+		scope = google.ScopeDriveFile
+	}
+	l := google.NewLogin(redirect, scope)
 	a.yt.mu.Lock()
 	if a.yt.logins == nil {
 		a.yt.logins = map[string]*google.Login{}
@@ -294,32 +304,53 @@ func (a *App) FinishLogin(ctx context.Context, state, code string) (string, erro
 	if err != nil {
 		return "", err
 	}
+	if !google.HasScope(scopes, l.Scope) {
+		return "", errors.New("při přihlášení nebyl povolen požadovaný přístup – zkuste to znovu a nechte oprávnění zaškrtnuté")
+	}
+	if l.Scope == google.ScopeDriveFile {
+		cl := &google.Client{ClientID: cfg.YouTube.ClientID, ClientSecret: cfg.YouTube.ClientSecret, RefreshToken: refresh}
+		acct, err := cl.DriveAccount(ctx)
+		if err != nil {
+			return "", fmt.Errorf("%w (je v Google Cloud zapnuté Google Drive API?)", err)
+		}
+		a.updateConfig(func(c *config.Config) {
+			if c.Cloud.Account != acct {
+				c.Cloud.FolderID, c.Cloud.SheetID = "", "" // another account: its own folder and spreadsheet
+			}
+			c.Cloud.RefreshToken, c.Cloud.Account, c.Cloud.Scopes = refresh, acct, scopes
+		})
+		a.Log.Printf("Google Disk: přihlášen účet %s", acct)
+		a.cloudReconcile()
+		return "Google Disk – " + acct, nil
+	}
+
 	y := cfg.YouTube
 	y.RefreshToken = refresh
 	ch, err := ytClient(y).MyChannel(ctx)
 	if err != nil {
-		if !google.HasScope(scopes, google.ScopeYouTube) {
-			return "", errors.New("při přihlášení nebyl povolen přístup k YouTube – zkuste to znovu a nechte zaškrtnutá všechna oprávnění")
-		}
 		return "", err
 	}
 	a.updateConfig(func(c *config.Config) {
 		if c.YouTube.ChannelID != ch.ID {
-			// A different account: its own stream, backup folder and spreadsheet.
-			c.YouTube.StreamID, c.Cloud.FolderID, c.Cloud.SheetID = "", "", ""
+			c.YouTube.StreamID = "" // a different channel needs its own stream
 		}
 		c.YouTube.RefreshToken, c.YouTube.ChannelID, c.YouTube.ChannelTitle = refresh, ch.ID, ch.Title
-		c.Cloud.Scopes = scopes
 	})
-	a.Log.Printf("Google: přihlášen kanál „%s“ (Disk: %v)", ch.Title, google.HasScope(scopes, google.ScopeDriveFile))
-	a.cloudReconcile()
-	return ch.Title, nil
+	a.Log.Printf("YouTube: přihlášen kanál „%s“", ch.Title)
+	return "YouTube – " + ch.Title, nil
+}
+
+// LogoutDrive forgets the Google Drive sign-in (backup and spreadsheet stop).
+func (a *App) LogoutDrive() {
+	a.updateConfig(func(c *config.Config) {
+		c.Cloud.RefreshToken, c.Cloud.Account, c.Cloud.Scopes = "", "", ""
+	})
+	a.Log.Print("Google Disk: odhlášeno")
 }
 
 func (a *App) Logout() {
 	a.updateConfig(func(c *config.Config) {
 		c.YouTube.RefreshToken, c.YouTube.ChannelID, c.YouTube.ChannelTitle, c.YouTube.StreamID = "", "", "", ""
-		c.Cloud.Scopes = ""
 	})
 	a.saveBroadcast(nil)
 	a.yt.mu.Lock()

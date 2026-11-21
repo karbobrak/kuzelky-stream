@@ -396,15 +396,17 @@
         <label class="check"><input type="checkbox" name="cloud.tabulkaVysledku"> Zapisovat výsledky do Google Tabulky (list Utkání a Hráči)</label>
         <p id="cloudState" class="small"></p>
         <div class="row actions">
-          <button type="button" id="btnCloudLogin" hidden>Přihlásit ke Google</button>
+          <button type="button" id="btnCloudLogin">Přihlásit Google Disk</button>
+          <button type="button" id="btnCloudLogout" hidden>Odhlásit Disk</button>
           <button type="button" id="btnCloudSync">Synchronizovat teď</button>
           <a id="cloudFolder" target="_blank" rel="noopener" hidden>Otevřít složku na Disku</a>
           <a id="cloudSheet" target="_blank" rel="noopener" hidden>Otevřít tabulku výsledků</a>
           <button type="button" id="btnCloudGfx" title="Rozmístění grafiky, předvolby, výřez a pravidla">Obnovit nastavení grafiky z Disku</button>
         </div>
-        <p class="muted small">Používá stejné přihlášení jako YouTube. Aplikace vidí jen soubory, které sama vytvořila
-          (složka „KuzelkyStream“). Na jiném notebooku se po přihlášení utkání a soupisky stáhnou samy.
-          V Google Cloud musí být zapnuté <i>Google Drive API</i> a <i>Google Sheets API</i>.</p>
+        <p class="muted small">Disk se přihlašuje zvlášť (Google nedovolí YouTube a Disk v jednom přihlášení), může to být
+          i jiný účet než kanál. Aplikace vidí jen soubory, které sama vytvořila (složka „KuzelkyStream“).
+          Na jiném notebooku se utkání a soupisky stáhnou samy. V Google Cloud musí být zapnuté
+          <i>Google Drive API</i> a <i>Google Sheets API</i>; Client ID a secret se berou ze sekce YouTube.</p>
       </fieldset>
 
       <fieldset class="card">

@@ -167,8 +167,8 @@ func TestCloudSync(t *testing.T) {
 
 	dir := t.TempDir()
 	cfg := config.Default()
-	cfg.YouTube.ClientID, cfg.YouTube.ClientSecret, cfg.YouTube.RefreshToken = "id", "secret", "R"
-	cfg.Cloud.Scopes = google.Scopes
+	cfg.YouTube.ClientID, cfg.YouTube.ClientSecret, cfg.Cloud.RefreshToken = "id", "secret", "R"
+	cfg.Cloud.Scopes = google.ScopeDriveFile
 	a := New(dir, filepath.Join(dir, "config.json"), cfg, "ffmpeg", log.New(io.Discard, "", 0), NewLogBuf(10))
 
 	m := match.New(cfg.Rules)

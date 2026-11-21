@@ -131,7 +131,7 @@ func TestRevokedLogin(t *testing.T) {
 }
 
 func TestAuthURL(t *testing.T) {
-	l := NewLogin("http://127.0.0.1:8080/oauth2/callback")
+	l := NewLogin("http://127.0.0.1:8080/oauth2/callback", ScopeYouTube)
 	u := l.AuthURL("cid")
 	for _, want := range []string{"code_challenge_method=S256", "access_type=offline", "client_id=cid",
 		"redirect_uri=http%3A%2F%2F127.0.0.1%3A8080%2Foauth2%2Fcallback", "state=" + l.State} {

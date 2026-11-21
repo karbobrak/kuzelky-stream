@@ -111,15 +111,18 @@ type Config struct {
 	Cloud   Cloud       `json:"cloud"`
 }
 
-// Cloud: backup of matches, rosters and graphics settings to the signed-in account's Google Drive,
-// and a results spreadsheet. Uses the same Google sign-in as YouTube.
+// Cloud: backup of matches, rosters and graphics settings to Google Drive, and a results spreadsheet.
+// Its own Google sign-in (Google does not allow YouTube and Drive in one sign-in); the OAuth client
+// (ClientID/ClientSecret) is the one from the YouTube settings.
 type Cloud struct {
 	Backup bool `json:"zalohaNaDisk"`
 	Sheet  bool `json:"tabulkaVysledku"`
 	// Managed by the app.
-	Scopes   string `json:"opravneni"`
-	FolderID string `json:"slozkaId"`
-	SheetID  string `json:"tabulkaId"`
+	RefreshToken string `json:"refreshToken"`
+	Account      string `json:"ucet"`
+	Scopes       string `json:"opravneni"`
+	FolderID     string `json:"slozkaId"`
+	SheetID      string `json:"tabulkaId"`
 }
 
 func Default() Config {
@@ -297,7 +300,7 @@ var credsInURL = regexp.MustCompile(`(?i)(rtsps?|rtmps?|https?)://([^:/@\s]*):[^
 func (c Config) Mask(s string) string {
 	s = credsInURL.ReplaceAllString(s, "$1://$2:***@")
 	for _, secret := range []string{c.Camera.Password, url.QueryEscape(c.Camera.Password),
-		url.PathEscape(c.Camera.Password), c.YouTube.Key, c.YouTube.ClientSecret, c.YouTube.RefreshToken} {
+		url.PathEscape(c.Camera.Password), c.YouTube.Key, c.YouTube.ClientSecret, c.YouTube.RefreshToken, c.Cloud.RefreshToken} {
 		if len(secret) >= 3 {
 			s = strings.ReplaceAll(s, secret, "***")
 		}

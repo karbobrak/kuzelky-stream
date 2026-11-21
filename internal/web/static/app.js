@@ -264,8 +264,12 @@ function updateYtSettings() {
 }
 $("ytMode").onchange = updateYtSettings;
 
-$("btnYtLogin").onclick = () => googleLogin();
-$("btnCloudLogin").onclick = () => googleLogin();
+$("btnYtLogin").onclick = () => googleLogin("/api/youtube/prihlaseni");
+$("btnCloudLogin").onclick = () => googleLogin("/api/cloud/prihlaseni");
+$("btnCloudLogout").onclick = async () => {
+  if (!confirm("Odhlásit Google Disk? Záloha a tabulka výsledků se zastaví.")) return;
+  try { await api("POST", "/api/cloud/odhlasit", {}); await loadSettings(); } catch (err) { $("saveMsg").textContent = err.message; }
+};
 
 async function refreshCloud() {
   let s;
@@ -273,20 +277,21 @@ async function refreshCloud() {
   const el = $("cloudState");
   let text, cls = "small";
   if (!s.zaloha && !s.tabulka) { text = "Vypnuto."; cls += " muted"; }
-  else if (s.chybiPrihlaseni) { text = "Nepřihlášeno ke Google – přihlaste se (Nastavení → YouTube, režim API)."; cls += " bad-text"; }
-  else if (s.chybiOpravneni) { text = "Přihlášení nemá přístup k Disku – přihlaste se znovu a povolte všechna oprávnění."; cls += " bad-text"; }
+  else if (s.chybiPrihlaseni) { text = "Google Disk není přihlášený – klikněte na Přihlásit Google Disk."; cls += " bad-text"; }
   else if (s.chyba) { text = "Chyba: " + s.chyba; cls += " bad-text"; }
   else if (s.cekajici) { text = `Čeká na nahrání: ${s.cekajici}` + (s.posledni ? ` (naposledy ${s.posledni})` : ""); }
   else { text = s.posledni ? `✓ Synchronizováno v ${s.posledni}` : "Připraveno, zatím nic nenahráno."; cls += " ok-text"; }
+  if (s.ucet) text = `Účet ${s.ucet} · ` + text;
   el.textContent = text; el.className = cls;
-  $("btnCloudLogin").hidden = !(s.chybiPrihlaseni || s.chybiOpravneni);
+  $("btnCloudLogin").textContent = s.ucet ? "Přihlásit jiný účet" : "Přihlásit Google Disk";
+  $("btnCloudLogout").hidden = !s.ucet;
   $("cloudFolder").hidden = !s.slozka; $("cloudFolder").href = s.slozka || "#";
   $("cloudSheet").hidden = !s.tabulkaOdkaz; $("cloudSheet").href = s.tabulkaOdkaz || "#";
   const z = document.getElementById("zCloud");
   if (z) {
-    z.textContent = !(s.zaloha || s.tabulka) ? "" : s.chyba || s.chybiPrihlaseni || s.chybiOpravneni ? "☁ záloha nefunguje"
+    z.textContent = !(s.zaloha || s.tabulka) ? "" : s.chyba || s.chybiPrihlaseni ? "☁ záloha nefunguje"
       : s.cekajici ? "☁ ukládám…" : s.posledni ? "☁ zálohováno " + s.posledni : "";
-    z.className = "small " + (s.chyba || s.chybiOpravneni ? "bad-text" : "muted");
+    z.className = "small " + (s.chyba || s.chybiPrihlaseni ? "bad-text" : "muted");
   }
 }
 setInterval(() => { if ($("tab-nastaveni").classList.contains("active") || $("tab-zapis").classList.contains("active")) refreshCloud(); }, 3000);
@@ -304,18 +309,18 @@ $("btnCloudGfx").onclick = async () => {
   catch (err) { $("saveMsg").textContent = err.message; }
 };
 
-async function googleLogin() {
+async function googleLogin(url) {
   const msg = $("saveMsg");
   try {
-    const r = await api("POST", "/api/youtube/prihlaseni", {});
+    const r = await api("POST", url, {});
     window.open(r.url, "_blank", "noopener");
     msg.textContent = "Dokončete přihlášení v nové záložce, pak sem přepněte zpět."; msg.className = "small";
     const until = Date.now() + 5 * 60 * 1000;
     const poll = setInterval(async () => {
       const v = await api("GET", "/api/nastaveni");
       const changed = v.nastaveni.youtube.kanal !== loaded.nastaveni.youtube.kanal ||
-        v.nastaveni.cloud.opravneni !== loaded.nastaveni.cloud.opravneni;
-      if ((v.nastaveni.youtube.kanal && changed) || Date.now() > until) {
+        v.nastaveni.cloud.ucet !== loaded.nastaveni.cloud.ucet;
+      if (changed || Date.now() > until) {
         clearInterval(poll);
         await loadSettings();
       }

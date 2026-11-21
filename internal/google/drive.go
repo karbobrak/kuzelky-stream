@@ -118,6 +118,23 @@ func (c *Client) Download(ctx context.Context, id string) ([]byte, error) {
 	return data, err
 }
 
+// DriveAccount returns the e-mail of the signed-in Drive account (shown in the settings).
+func (c *Client) DriveAccount(ctx context.Context) (string, error) {
+	var r struct {
+		User struct {
+			Email string `json:"emailAddress"`
+			Name  string `json:"displayName"`
+		} `json:"user"`
+	}
+	if err := c.do(ctx, "GET", driveBase+"about?fields=user(emailAddress,displayName)", "", nil, &r); err != nil {
+		return "", err
+	}
+	if r.User.Email != "" {
+		return r.User.Email, nil
+	}
+	return r.User.Name, nil
+}
+
 // MoveToFolder puts a file (e.g. the spreadsheet) into the app folder.
 func (c *Client) MoveToFolder(ctx context.Context, fileID, folderID string) error {
 	q := url.Values{"addParents": {folderID}, "removeParents": {"root"}, "fields": {"id"}}

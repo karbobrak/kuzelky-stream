@@ -28,12 +28,12 @@ var (
 	sheetsBase    = "https://sheets.googleapis.com/v4/"
 )
 
-// Scopes requested at sign-in.
+// Scopes. YouTube and Drive cannot be requested in one sign-in (Google refuses the combination:
+// YouTube picks a channel, Drive belongs to the account), so the app signs in twice.
 const (
 	ScopeYouTube = "https://www.googleapis.com/auth/youtube"
 	// drive.file: only files this app created (backup folder, results spreadsheet); non-sensitive.
 	ScopeDriveFile = "https://www.googleapis.com/auth/drive.file"
-	Scopes         = ScopeYouTube + " " + ScopeDriveFile
 )
 
 var httpClient = &http.Client{Timeout: 30 * time.Second}
@@ -45,6 +45,7 @@ type Login struct {
 	State    string
 	Verifier string
 	Redirect string
+	Scope    string // ScopeYouTube or ScopeDriveFile
 	Created  time.Time
 }
 
@@ -56,24 +57,23 @@ func randomString(n int) string {
 
 // NewLogin prepares a sign-in; redirect must be a loopback URL of this app (Google allows any port
 // for loopback redirects of "Desktop app" OAuth clients).
-func NewLogin(redirect string) *Login {
-	return &Login{State: randomString(24), Verifier: randomString(48), Redirect: redirect, Created: time.Now()}
+func NewLogin(redirect, scope string) *Login {
+	return &Login{State: randomString(24), Verifier: randomString(48), Redirect: redirect, Scope: scope, Created: time.Now()}
 }
 
 // AuthURL is the Google consent page the user opens in the browser.
 func (l *Login) AuthURL(clientID string) string {
 	sum := sha256.Sum256([]byte(l.Verifier))
 	q := url.Values{
-		"client_id":              {clientID},
-		"redirect_uri":           {l.Redirect},
-		"response_type":          {"code"},
-		"scope":                  {Scopes},
-		"include_granted_scopes": {"true"},
-		"access_type":            {"offline"},
-		"prompt":                 {"consent select_account"},
-		"state":                  {l.State},
-		"code_challenge":         {base64.RawURLEncoding.EncodeToString(sum[:])},
-		"code_challenge_method":  {"S256"},
+		"client_id":             {clientID},
+		"redirect_uri":          {l.Redirect},
+		"response_type":         {"code"},
+		"scope":                 {l.Scope},
+		"access_type":           {"offline"},
+		"prompt":                {"consent select_account"},
+		"state":                 {l.State},
+		"code_challenge":        {base64.RawURLEncoding.EncodeToString(sum[:])},
+		"code_challenge_method": {"S256"},
 	}
 	return authEndpoint + "?" + q.Encode()
 }

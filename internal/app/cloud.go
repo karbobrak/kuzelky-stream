@@ -55,7 +55,17 @@ type gfxSettings struct {
 }
 
 func (a *App) cloudReady(c config.Config) bool {
-	return (c.Cloud.Backup || c.Cloud.Sheet) && c.YouTube.APIReady() && google.HasScope(c.Cloud.Scopes, google.ScopeDriveFile)
+	return (c.Cloud.Backup || c.Cloud.Sheet) && driveSignedIn(c)
+}
+
+// driveSignedIn: the app has a Google Drive sign-in (separate from the YouTube one).
+func driveSignedIn(c config.Config) bool {
+	return c.YouTube.ClientID != "" && c.YouTube.ClientSecret != "" && c.Cloud.RefreshToken != "" &&
+		google.HasScope(c.Cloud.Scopes, google.ScopeDriveFile)
+}
+
+func driveClient(c config.Config) *google.Client {
+	return &google.Client{ClientID: c.YouTube.ClientID, ClientSecret: c.YouTube.ClientSecret, RefreshToken: c.Cloud.RefreshToken}
 }
 
 func (a *App) markDirty(keys ...string) {
@@ -140,7 +150,7 @@ func (a *App) cloudSync(ctx context.Context) {
 }
 
 func (a *App) cloudSyncItems(ctx context.Context, c config.Config, dirty map[string]bool, reconcile bool) error {
-	cl := ytClient(c.YouTube)
+	cl := driveClient(c)
 	folder, err := cl.EnsureFolder(ctx, c.Cloud.FolderID, folderName)
 	if err != nil {
 		if errors.Is(err, google.ErrAuth) {
@@ -321,9 +331,9 @@ func remoteTime(f google.DriveFile) time.Time {
 func (a *App) RestoreGraphics(ctx context.Context) error {
 	c := a.Config()
 	if !a.cloudReady(c) {
-		return errors.New("záloha na Disk není připravená (přihlášení ke Google s přístupem k Disku)")
+		return errors.New("záloha na Disk není připravená – přihlaste Google Disk (Nastavení → Záloha a výsledky)")
 	}
-	cl := ytClient(c.YouTube)
+	cl := driveClient(c)
 	folder, err := cl.EnsureFolder(ctx, c.Cloud.FolderID, folderName)
 	if err != nil {
 		return err
@@ -362,7 +372,7 @@ func (a *App) FlushCloud(ctx context.Context) { a.cloudSync(ctx) }
 func (a *App) SyncNow(ctx context.Context) error {
 	c := a.Config()
 	if !a.cloudReady(c) {
-		return errors.New("záloha na Disk není připravená (přihlášení ke Google s přístupem k Disku)")
+		return errors.New("záloha na Disk není připravená – přihlaste Google Disk (Nastavení → Záloha a výsledky)")
 	}
 	a.cl.mu.Lock()
 	a.cl.reconcile = true
@@ -381,7 +391,7 @@ type CloudStatus struct {
 	Sheet          bool   `json:"tabulka"`
 	Ready          bool   `json:"pripraveno"`
 	NeedLogin      bool   `json:"chybiPrihlaseni"`
-	NeedScope      bool   `json:"chybiOpravneni"`
+	Account        string `json:"ucet,omitempty"`
 	LastSync       string `json:"posledni,omitempty"`
 	Pending        int    `json:"cekajici"`
 	Error          string `json:"chyba,omitempty"`
@@ -392,7 +402,7 @@ type CloudStatus struct {
 func (a *App) CloudStatus() CloudStatus {
 	c := a.Config()
 	s := CloudStatus{Backup: c.Cloud.Backup, Sheet: c.Cloud.Sheet, Ready: a.cloudReady(c),
-		NeedLogin: !c.YouTube.APIReady(), NeedScope: c.YouTube.APIReady() && !google.HasScope(c.Cloud.Scopes, google.ScopeDriveFile)}
+		NeedLogin: !driveSignedIn(c), Account: c.Cloud.Account}
 	if c.Cloud.FolderID != "" {
 		s.FolderURL = "https://drive.google.com/drive/folders/" + c.Cloud.FolderID
 	}
