@@ -233,3 +233,34 @@ func TestColName(t *testing.T) {
 		}
 	}
 }
+
+// A brand-new install (no local changes yet) signing in to an empty Drive used to panic on a nil
+// dirty map in the background sync.
+func TestCloudSyncFreshInstall(t *testing.T) {
+	fg := &fakeGoogle{files: map[string]*fakeFile{}, sheets: map[string]map[string][][]string{}}
+	srv := httptest.NewServer(fg)
+	defer srv.Close()
+	google.SetBaseURLForTest(srv.URL)
+
+	dir := t.TempDir()
+	cfg := config.Default()
+	cfg.YouTube.ClientID, cfg.YouTube.ClientSecret, cfg.Cloud.RefreshToken = "id", "secret", "R"
+	cfg.Cloud.Scopes = google.ScopeDriveFile
+	a := New(dir, filepath.Join(dir, "config.json"), cfg, "ffmpeg", log.New(io.Discard, "", 0), NewLogBuf(10))
+	a.cl.mu.Lock()
+	a.cl.dirty, a.cl.reconcile = nil, true
+	a.cl.mu.Unlock()
+
+	a.cloudSync(t.Context())
+
+	if s := a.CloudStatus(); s.Error != "" {
+		t.Fatalf("sync error: %s", s.Error)
+	}
+	found := false
+	for _, fl := range fg.files {
+		found = found || fl.Name == gfxFile
+	}
+	if !found {
+		t.Fatal("graphics settings were not uploaded")
+	}
+}

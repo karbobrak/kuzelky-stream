@@ -124,6 +124,9 @@ func (a *App) cloudSync(ctx context.Context) {
 	}
 	a.cl.mu.Lock()
 	dirty, reconcile := a.cl.dirty, a.cl.reconcile
+	if dirty == nil { // fresh install: nothing changed locally yet, reconcile still adds to it
+		dirty = map[string]bool{}
+	}
 	a.cl.dirty, a.cl.reconcile = map[string]bool{}, false
 	a.cl.mu.Unlock()
 	if len(dirty) == 0 && !reconcile {
