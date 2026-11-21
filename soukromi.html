@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kuželky Stream – ochrana soukromí</title>
+<style>
+  :root { --bg: #f5f6f8; --text: #17202e; --muted: #5d6879; --card: #fff; --accent: #1f5fd1; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #10151d; --text: #e6ebf2; --muted: #9aa6b8; --card: #18202c; --accent: #6b9cf5; } }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.6 "Segoe UI", system-ui, sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 32px 16px; }
+  .card { background: var(--card); border-radius: 12px; padding: 24px 28px; }
+  h1 { margin-top: 0; }
+  h2 { font-size: 18px; margin-top: 28px; }
+  a { color: var(--accent); }
+  .muted { color: var(--muted); font-size: 14px; }
+</style>
+</head>
+<body>
+<main>
+  <div class="card">
+    <h1>Zásady ochrany soukromí – Kuželky Stream</h1>
+    <p class="muted">Platné od 21. 11. 2026</p>
+
+    <h2>Co aplikace dělá</h2>
+    <p>Kuželky Stream je aplikace pro Windows, která běží na počítači kuželkářského oddílu. Vysílá obraz
+      z kamery v kuželně se skóre utkání na YouTube kanál oddílu.</p>
+
+    <h2>Jaká data z Google účtu používá</h2>
+    <ul>
+      <li><b>YouTube</b> (oprávnění „spravovat váš účet YouTube“): aplikace zakládá živé přenosy,
+        propojuje je s vysíláním, sleduje jejich stav a po utkání je ukončuje. Čte název a ID kanálu.
+        Jiná videa, komentáře ani údaje kanálu nečte a nemění.</li>
+      <li><b>Google Disk</b> (oprávnění „pouze soubory vytvořené touto aplikací“): aplikace vytvoří
+        složku „KuzelkyStream“ se zálohou utkání a soupisek a tabulku výsledků. K ostatním souborům na Disku
+        přístup nemá. Čte e-mail účtu, aby ho mohla zobrazit v nastavení.</li>
+    </ul>
+
+    <h2>Kde jsou data uložena</h2>
+    <p>Přihlašovací údaje (tokeny od Googlu), nastavení a data utkání se ukládají jen na počítači, na kterém
+      aplikace běží, a do Google účtu oddílu (YouTube, Disk). Autor aplikace ani nikdo jiný data nedostává.
+      Aplikace nepoužívá analytiku ani reklamu a data nikomu neprodává ani nepředává.</p>
+
+    <h2>Jména hráčů</h2>
+    <p>Jména hráčů a výsledky zapsané v aplikaci se zobrazují v živém přenosu a ukládají do zálohy a tabulky
+      výsledků v Google účtu oddílu. Za jejich zveřejnění odpovídá oddíl, který přenos provozuje.</p>
+
+    <h2>Zrušení přístupu</h2>
+    <p>Přístup aplikace lze kdykoli zrušit v aplikaci (Nastavení → Odhlásit) nebo v Google účtu na
+      <a href="https://myaccount.google.com/permissions">myaccount.google.com/permissions</a>.
+      Smazáním složky aplikace z počítače se smažou všechna lokální data.</p>
+
+    <h2>Kontakt</h2>
+    <p><a href="https://github.com/karbobrak/kuzelky-stream/issues">github.com/karbobrak/kuzelky-stream/issues</a></p>
+    <p><a href="index.html">Zpět na popis aplikace</a></p>
+  </div>
+</main>
+</body>
+</html>
