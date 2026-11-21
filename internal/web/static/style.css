@@ -221,6 +221,11 @@ details[open] summary { margin-bottom: 10px; }
 /* settings */
 fieldset.card { display: flex; flex-direction: column; gap: 10px; }
 .stack { display: flex; flex-direction: column; gap: 10px; }
+table.laneplan { border-collapse: collapse; }
+table.laneplan th { text-align: left; font-size: 12px; color: var(--muted); font-weight: 600; padding: 0 8px 4px 0; }
+table.laneplan td { padding: 3px 8px 3px 0; }
+table.laneplan td:first-child { white-space: nowrap; color: var(--muted); }
+table.laneplan input { width: 100%; min-width: 140px; }
 legend { font-weight: 600; padding: 0 6px; margin-left: -6px; }
 label { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 180px; }
 label.narrow { flex: 0 1 200px; min-width: 120px; }

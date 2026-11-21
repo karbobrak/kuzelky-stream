@@ -4,6 +4,8 @@ package match
 import (
 	"errors"
 	"fmt"
+	"reflect"
+	"slices"
 	"strings"
 )
 
@@ -18,6 +20,45 @@ type Rules struct {
 	DuelTieByPins   bool    `json:"remizaSoubojeRozhodujeKuzelky"`
 	TotalPinsPoints float64 `json:"bodyZaCelkem"`
 	MaxPinsPerLane  int     `json:"maxKuzelekNaDrahu"` // 30 throws × 9 pins = 270
+	// LanePlan: which physical lane each player plays each lane segment on, per duel slot of a part
+	// (index 0 = first duel of every part). Only shown to the scorer; empty = not shown.
+	LanePlan []LaneSlot `json:"poradiDrah,omitempty"`
+}
+
+// LaneSlot: lane numbers of the home and away player, one per lane segment.
+type LaneSlot struct {
+	Home []int `json:"domaci"`
+	Away []int `json:"hoste"`
+}
+
+// Equal compares rules including the lane plan (an empty plan equals a missing one).
+func (r Rules) Equal(o Rules) bool {
+	if len(r.LanePlan) == 0 {
+		r.LanePlan = nil
+	}
+	if len(o.LanePlan) == 0 {
+		o.LanePlan = nil
+	}
+	return reflect.DeepEqual(r, o)
+}
+
+// LaneOf returns the physical lane of duel i (0-based), side "d"/"h", segment j; 0 = unknown.
+func (r Rules) LaneOf(i int, side string, j int) int {
+	if r.DuelsPerPart < 1 {
+		return 0
+	}
+	slot := i % r.DuelsPerPart
+	if slot >= len(r.LanePlan) {
+		return 0
+	}
+	seq := r.LanePlan[slot].Home
+	if side == "h" {
+		seq = r.LanePlan[slot].Away
+	}
+	if j < 0 || j >= len(seq) {
+		return 0
+	}
+	return seq[j]
 }
 
 func DefaultRules() Rules {
@@ -35,6 +76,13 @@ func (r Rules) Validate() error {
 		return errors.New("počet soubojů v části musí být 1 až počet hráčů")
 	case r.MaxPinsPerLane < 1:
 		return errors.New("maximum kuželek na dráhu musí být kladné")
+	}
+	for i, sl := range r.LanePlan {
+		for _, n := range append(slices.Clone(sl.Home), sl.Away...) {
+			if n < 1 || n > 20 {
+				return fmt.Errorf("rozpis drah, %d. souboj části: číslo dráhy musí být 1–20 (%d)", i+1, n)
+			}
+		}
 	}
 	return nil
 }

@@ -57,6 +57,14 @@ function partDuels(p) {
 }
 function partDone(p) { return partDuels(p).every((i) => view.vysledek.souboje[i].dohrano); }
 
+// Physical lane of duel di, side "d"/"h", segment j from the rules' lane plan (0 = not set).
+function laneOf(di, side, j) {
+  const plan = view.pravidla.poradiDrah || [], n = view.pravidla.soubojuNaCast || 1;
+  const sl = plan[di % n];
+  const seq = sl ? (side === "d" ? sl.domaci : sl.hoste) : null;
+  return seq && seq[j] ? seq[j] : 0;
+}
+
 function renderDuels() {
   const m = view.zapas, r = view.vysledek, lanes = view.pravidla.drah;
   const box = $("zDuels");
@@ -68,7 +76,7 @@ function renderDuels() {
     const card = document.createElement("div");
     card.className = "card duel";
     let head = `<th class="name">Souboj ${di + 1}</th>`;
-    for (let j = 0; j < lanes; j++) head += `<th>Dráha ${j + 1}</th>`;
+    for (let j = 0; j < lanes; j++) head += `<th>${j + 1}. úsek</th>`;
     head += `<th>Průběžně</th><th>Součet</th><th>SB</th><th>Body</th>`;
     const row = (side) => {
       const home = side === "d";
@@ -77,10 +85,14 @@ function renderDuels() {
         const v = d.useky[j][side];
         // Tab/Enter order: lane by lane, all players of the part (as the scores come in).
         const order = j * duels.length * 2 + k * 2 + (home ? 0 : 1);
-        h += `<td><input class="pin" inputmode="numeric" data-key="${di}:${j}:${side}" data-order="${order}" value="${v ?? ""}"></td>`;
+        const lane = laneOf(di, side, j);
+        const hint = lane ? ` placeholder="dr. ${lane}" title="${j + 1}. úsek na dráze ${lane}"` : "";
+        h += `<td><input class="pin" inputmode="numeric" data-key="${di}:${j}:${side}" data-order="${order}"${hint} value="${v ?? ""}"></td>`;
       }
       const lv = d.prubezne[side];
-      h += `<td><input class="pin live" inputmode="numeric" data-key="${di}:-1:${side}" data-order="${1000 + k * 2 + (home ? 0 : 1)}" value="${lv ?? ""}"></td>`;
+      const nowLane = laneOf(di, side, d.useky.findIndex((p) => p[side] == null)); // lane being played now
+      const liveHint = nowLane ? ` placeholder="dr. ${nowLane}" title="právě hraje na dráze ${nowLane}"` : "";
+      h += `<td><input class="pin live" inputmode="numeric" data-key="${di}:-1:${side}" data-order="${1000 + k * 2 + (home ? 0 : 1)}"${liveHint} value="${lv ?? ""}"></td>`;
       const sum = home ? dr.dSoucet : dr.hSoucet, sb = home ? dr.dSB : dr.hSB, p = home ? dr.dBody : dr.hBody;
       const win = dr.dohrano && p > (home ? dr.hBody : dr.dBody);
       h += `<td class="sum">${sum}</td><td class="sb">${pts(sb)}</td><td class="pts${win ? " win" : ""}">${dr.dohrano ? pts(p) : "–"}</td>`;

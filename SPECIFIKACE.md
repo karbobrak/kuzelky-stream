@@ -439,3 +439,7 @@ oblasti místo okna konzole, napojení na automaty (snímání čítačů), expo
   aplikace zjistí z ffmpeg (`-list_devices`, `-list_options`). Webkameru smí mít otevřenou jen jeden program,
   takže během vysílání nejde test kamery ani snímek pro výřez (aplikace to hlásí). Výpadek / odpojení USB řeší
   stejný supervizor jako u RTSP (nový pokus každé 3 s).
+- **Rozpis drah** (pravidla, `poradiDrah`): pro každý souboj v části a stranu seznam fyzických drah po
+  úsecích. Předvolby „každý souboj střídá své 2 dráhy“ a „rotace přes všechny dráhy“, nebo vlastní.
+  Zápis ukazuje v prázdných políčkách „dr. N“ a v políčku Průběžně dráhu, na které se právě hraje.
+  Pole „Drah“ v pravidlech je ve skutečnosti počet úseků (po 30 hodech) a v UI se tak jmenuje.

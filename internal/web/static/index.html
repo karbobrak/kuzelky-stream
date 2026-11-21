@@ -446,7 +446,7 @@
         <legend>Pravidla soutěže <span class="tag live">hned</span></legend>
         <div class="row">
           <label class="narrow">Hráčů v týmu <input name="pravidla.hracuNaTym" type="number" min="1" max="12"></label>
-          <label class="narrow">Drah <input name="pravidla.drah" type="number" min="1" max="8"></label>
+          <label class="narrow">Úseků (drah) na hráče <input name="pravidla.drah" type="number" min="1" max="8"></label>
           <label class="narrow">Soubojů najednou (v části) <input name="pravidla.soubojuNaCast" type="number" min="1" max="12"></label>
           <label class="narrow">Max. kuželek na dráhu <input name="pravidla.maxKuzelekNaDrahu" type="number" min="1"></label>
         </div>
@@ -457,6 +457,20 @@
           <label class="narrow">Bodů za vyšší součet týmu <input name="pravidla.bodyZaCelkem" type="number" step="0.5" min="0"></label>
         </div>
         <label class="check"><input type="checkbox" name="pravidla.remizaSoubojeRozhodujeKuzelky"> Při rovnosti setových bodů rozhoduje souboj vyšší počet kuželek</label>
+        <div class="row">
+          <label>Rozpis drah <select id="lanePreset">
+            <option value="">nezobrazovat</option>
+            <option value="dvojice">každý souboj střídá své 2 dráhy (1–2, 3–4)</option>
+            <option value="rotace">rotace přes všechny dráhy</option>
+            <option value="vlastni">vlastní</option>
+          </select></label>
+        </div>
+        <table class="laneplan" id="lanePlanTable" hidden>
+          <thead><tr><th></th><th>Domácí hráč – dráhy po úsecích</th><th>Hostující hráč – dráhy po úsecích</th></tr></thead>
+          <tbody id="lanePlan"></tbody>
+        </table>
+        <p class="muted small">Na které dráze hraje hráč který úsek. Čísla drah oddělte mezerou, např. „1 2 1 2“.
+          V Zápisu se u každého políčka ukáže, ze které dráhy výsledek opsat. Na počítání bodů nemá vliv.</p>
         <p class="muted small">Výchozí = 1. KLM: 6 hráčů, 4 dráhy, 2 souboje najednou, souboj 1 bod, celkový součet 2 body (celkem 8).
           Změna počtu hráčů nebo drah upraví i otevřené utkání.</p>
       </fieldset>

@@ -76,4 +76,6 @@ Nastavení (záložka NASTAVENÍ, změny se ukládají do config.json):
   Google ukáže „aplikace není ověřená“ → Rozšířené → Přejít na Kuzelky Stream.
 - Záloha a výsledky: Přihlásit Google Disk (zvláštní přihlášení, může být i jiný účet než kanál).
 - Obraz a grafika: výřez z kamery, posun a velikost grafiky myší, předvolby pro různé kuželny.
-- Pravidla soutěže: výchozí 1. KLM (6 hráčů, 4 dráhy, 8 bodů).
+- Pravidla soutěže: výchozí 1. KLM (6 hráčů, 4 úseky na hráče, 8 bodů).
+  Rozpis drah: na které dráze hraje hráč který úsek (např. každý souboj střídá jen své
+  2 dráhy: 1–2 a 3–4). V Zápisu se pak v prázdném políčku ukáže „dr. 3“ = opsat z dráhy 3.

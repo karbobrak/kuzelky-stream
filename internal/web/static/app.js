@@ -207,6 +207,8 @@ function formToConfig() {
     if (el.name === "vystup.rozliseni") {
       const [w, h] = el.value.split("x").map(Number);
       cfg.vystup.sirka = w; cfg.vystup.vyska = h;
+    } else if (el.name.startsWith("lane:")) {
+      // collected by readLanePlan below
     } else if (el.name === "kamera.fpsWebkamery") {
       cfg.kamera.fpsWebkamery = Number(el.value);
     } else if (el.name === "vystup.fps") {
@@ -215,13 +217,14 @@ function formToConfig() {
       cfg[sec][key] = fieldValue(el);
     }
   }
+  cfg.pravidla.poradiDrah = readLanePlan();
   return cfg;
 }
 
 function configToForm(view) {
   const cfg = view.nastaveni;
   for (const el of form.elements) {
-    if (!el.name) continue;
+    if (!el.name || el.name.startsWith("lane:")) continue;
     const [sec, key] = el.name.split(".");
     if (el.name === "vystup.rozliseni") {
       const v = `${cfg.vystup.sirka}x${cfg.vystup.vyska}`;
@@ -247,12 +250,90 @@ async function loadSettings() {
   try {
     loaded = await api("GET", "/api/nastaveni");
     configToForm(loaded);
+    initLanePlan(loaded.nastaveni.pravidla.poradiDrah || []);
     updateCamSource();
     updateYtSettings();
     refreshCloud();
     $("saveMsg").textContent = "";
   } catch (e) { $("saveMsg").textContent = e.message; }
 }
+
+// ---- lane plan (which physical lane each player plays each segment on)
+function laneShape() {
+  const f = form.elements;
+  return { duels: Math.max(1, Number(f["pravidla.soubojuNaCast"].value) || 1), segs: Math.max(1, Number(f["pravidla.drah"].value) || 1) };
+}
+
+function lanePresetPlan(kind, duels, segs) {
+  const plan = [];
+  const n = duels * 2; // lanes in use: two per duel
+  for (let s = 0; s < duels; s++) {
+    const a = 2 * s + 1, b = 2 * s + 2, home = [], away = [];
+    for (let k = 0; k < segs; k++) {
+      if (kind === "dvojice") { home.push(k % 2 ? b : a); away.push(k % 2 ? a : b); }
+      else { home.push(((a - 1 + k) % n) + 1); away.push(((b - 1 + k) % n) + 1); }
+    }
+    plan.push({ domaci: home, hoste: away });
+  }
+  return plan;
+}
+
+function renderLanePlan(plan) {
+  const { duels } = laneShape();
+  const tb = $("lanePlan");
+  tb.replaceChildren();
+  for (let s = 0; s < duels; s++) {
+    const sl = plan[s] || { domaci: [], hoste: [] };
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${s + 1}. souboj části</td><td></td><td></td>`;
+    ["domaci", "hoste"].forEach((side, i) => {
+      const inp = document.createElement("input");
+      inp.name = `lane:${s}:${side}`;
+      inp.value = (sl[side] || []).join(" ");
+      inp.placeholder = "např. 1 2 1 2";
+      inp.oninput = () => { $("lanePreset").value = detectLanePreset(readLanePlanRaw()); };
+      tr.children[i + 1].append(inp);
+    });
+    tb.append(tr);
+  }
+  $("lanePlanTable").hidden = $("lanePreset").value === "";
+}
+
+// readLanePlanRaw reads the inputs; readLanePlan gives [] when the plan is switched off.
+function readLanePlanRaw() {
+  const { duels } = laneShape();
+  const plan = [];
+  const nums = (name) => (form.elements[name] ? form.elements[name].value : "")
+    .split(/[\s,;]+/).filter(Boolean).map(Number).filter((x) => Number.isInteger(x));
+  for (let s = 0; s < duels; s++) plan.push({ domaci: nums(`lane:${s}:domaci`), hoste: nums(`lane:${s}:hoste`) });
+  return plan;
+}
+function readLanePlan() { return $("lanePreset").value === "" ? [] : readLanePlanRaw(); }
+
+function detectLanePreset(plan) {
+  if (!plan.length) return "";
+  const { duels, segs } = laneShape();
+  for (const k of ["dvojice", "rotace"]) {
+    if (JSON.stringify(lanePresetPlan(k, duels, segs)) === JSON.stringify(plan)) return k;
+  }
+  return "vlastni";
+}
+
+function initLanePlan(plan) {
+  $("lanePreset").value = detectLanePreset(plan);
+  renderLanePlan(plan);
+}
+
+function applyLanePreset() {
+  const k = $("lanePreset").value;
+  const { duels, segs } = laneShape();
+  if (k === "dvojice" || k === "rotace") renderLanePlan(lanePresetPlan(k, duels, segs));
+  else renderLanePlan(readLanePlanRaw());
+}
+$("lanePreset").onchange = applyLanePreset;
+// Changing the number of duels or segments regenerates a preset plan.
+form.elements["pravidla.soubojuNaCast"].addEventListener("change", applyLanePreset);
+form.elements["pravidla.drah"].addEventListener("change", applyLanePreset);
 
 // ---- webcam
 let wcLoaded = false;

@@ -298,7 +298,7 @@ func (a *App) ApplyConfig(c config.Config) (Impact, error) {
 	eng := a.eng
 	a.mu.Unlock()
 	a.Log.Print("nastavení uloženo")
-	if old.Rules != c.Rules {
+	if !old.Rules.Equal(c.Rules) {
 		a.mt.mu.Lock()
 		if a.mt.cur != nil {
 			a.mt.cur.Reshape(c.Rules)
@@ -307,7 +307,7 @@ func (a *App) ApplyConfig(c config.Config) (Impact, error) {
 		a.mt.mu.Unlock()
 	}
 	a.redraw() // layout or rules may have changed
-	if old.Picture != c.Picture || old.Rules != c.Rules {
+	if old.Picture != c.Picture || !old.Rules.Equal(c.Rules) {
 		a.markDirty("grafika")
 	}
 	if eng == nil {
