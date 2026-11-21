@@ -264,13 +264,21 @@ function laneShape() {
   return { duels: Math.max(1, Number(f["pravidla.soubojuNaCast"].value) || 1), segs: Math.max(1, Number(f["pravidla.drah"].value) || 1) };
 }
 
+// Lane changes over four segments by starting lane, STP ČKA čl. 20 odst. 1 (four- and six-lane alleys).
+const STP_ROTATION = {
+  4: { 1: [1, 2, 4, 3], 2: [2, 1, 3, 4], 3: [3, 4, 2, 1], 4: [4, 3, 1, 2] },
+  6: { 1: [1, 2, 4, 3], 2: [2, 1, 3, 4], 3: [3, 4, 6, 5], 4: [4, 3, 5, 6], 5: [5, 6, 2, 1], 6: [6, 5, 1, 2] },
+};
+
 function lanePresetPlan(kind, duels, segs) {
   const plan = [];
-  const n = duels * 2; // lanes in use: two per duel
+  const n = duels * 2; // lanes in use: two per duel, home starts on the odd one
+  const table = STP_ROTATION[n];
   for (let s = 0; s < duels; s++) {
     const a = 2 * s + 1, b = 2 * s + 2, home = [], away = [];
     for (let k = 0; k < segs; k++) {
       if (kind === "dvojice") { home.push(k % 2 ? b : a); away.push(k % 2 ? a : b); }
+      else if (table && segs === 4) { home.push(table[a][k]); away.push(table[b][k]); }
       else { home.push(((a - 1 + k) % n) + 1); away.push(((b - 1 + k) % n) + 1); }
     }
     plan.push({ domaci: home, hoste: away });
