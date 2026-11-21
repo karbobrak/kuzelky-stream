@@ -65,6 +65,20 @@ func Serve(ln net.Listener, port int, a *app.App) error {
 		reply(w, map[string]any{"dopad": imp}, err)
 	})
 	mux.HandleFunc("POST /api/test/kamera", s.testCamera)
+	mux.HandleFunc("GET /api/webkamery", func(w http.ResponseWriter, r *http.Request) {
+		v, au, err := a.Webcams(r.Context())
+		if v == nil {
+			v = []string{}
+		}
+		if au == nil {
+			au = []string{}
+		}
+		reply(w, map[string]any{"kamery": v, "mikrofony": au}, err)
+	})
+	mux.HandleFunc("GET /api/webkamery/rezimy", func(w http.ResponseWriter, r *http.Request) {
+		m, err := a.WebcamModes(r.Context(), r.URL.Query().Get("nazev"))
+		reply(w, map[string]any{"rezimy": m}, err)
+	})
 	mux.HandleFunc("POST /api/test/kodery", func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, a.TestEncoders(r.Context()))
 	})
@@ -142,6 +156,26 @@ func Serve(ln net.Listener, port int, a *app.App) error {
 		matchReply(w, a.OpenMatch(b.File))
 	})
 	mux.HandleFunc("GET /api/soupisky", func(w http.ResponseWriter, r *http.Request) { writeJSON(w, a.Rosters()) })
+	mux.HandleFunc("POST /api/zapasy/smazat", func(w http.ResponseWriter, r *http.Request) {
+		var b struct {
+			File string `json:"soubor"`
+		}
+		if err := decode(r, &b); err != nil {
+			reply(w, nil, err)
+			return
+		}
+		matchReply(w, a.DeleteMatch(b.File))
+	})
+	mux.HandleFunc("POST /api/soupisky/smazat", func(w http.ResponseWriter, r *http.Request) {
+		var b struct {
+			File string `json:"soubor"`
+		}
+		if err := decode(r, &b); err != nil {
+			reply(w, nil, err)
+			return
+		}
+		reply(w, nil, a.DeleteRoster(b.File))
+	})
 	mux.HandleFunc("GET /api/grafika.png", func(w http.ResponseWriter, r *http.Request) {
 		img, err := a.OverlayPreview()
 		if err != nil || img == nil {

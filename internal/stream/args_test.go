@@ -74,3 +74,43 @@ func TestPictureFilterDefault(t *testing.T) {
 		t.Fatalf("unexpected default filter: %s", f)
 	}
 }
+
+func TestParseDShow(t *testing.T) {
+	out := "[in#0 @ 0000017d1a4ec400] \"Integrated Camera\" (video)\r\n" +
+		"[in#0 @ 0000017d1a4ec400]   Alternative name \"@device_pnp_\\\\?\\usb#vid_04f2\"\r\n" +
+		"[in#0 @ 0000017d1a4ec400] \"Pole mikrofonu (2 - Realtek(R) Audio)\" (audio)\r\n" +
+		"Error opening input file dummy.\r\n"
+	v, a := parseDShowDevices(out)
+	if len(v) != 1 || v[0] != "Integrated Camera" || len(a) != 1 || a[0] != "Pole mikrofonu (2 - Realtek(R) Audio)" {
+		t.Fatalf("video %q audio %q", v, a)
+	}
+	modes := parseWebcamModes(`[in#0 @ 0] pixel_format=yuyv422  min s=1280x720 fps=15 max s=1280x720 fps=30
+[in#0 @ 0]   vcodec=mjpeg  min s=1920x1080 fps=5 max s=1920x1080 fps=30.0003
+[in#0 @ 0]   pixel_format=yuyv422  min s=1920x1080 fps=5 max s=1920x1080 fps=5
+[in#0 @ 0]   pixel_format=nv12  min s=640x480 fps=15 max s=640x480 fps=30`)
+	want := []WebcamMode{{"1920x1080", 30}, {"1280x720", 30}, {"640x480", 30}}
+	if len(modes) != len(want) {
+		t.Fatalf("modes %v", modes)
+	}
+	for i := range want {
+		if modes[i] != want[i] {
+			t.Fatalf("modes %v, want %v", modes, want)
+		}
+	}
+}
+
+func TestWebcamInput(t *testing.T) {
+	cam := config.Camera{Source: "webkamera", Webcam: "Integrated Camera", Mic: "Mikrofon", WebcamRes: "1920x1080", WebcamFPS: 30}
+	got := strings.Join(CameraInput(cam, true), " ")
+	if !strings.Contains(got, "-f dshow") || !strings.Contains(got, "-video_size 1920x1080 -framerate 30") ||
+		!strings.HasSuffix(got, "-i video=Integrated Camera:audio=Mikrofon") {
+		t.Fatalf("webcam input: %s", got)
+	}
+	if got := strings.Join(CameraInput(cam, false), " "); strings.Contains(got, "audio=") {
+		t.Fatalf("no audio wanted: %s", got)
+	}
+	rtsp := config.Camera{Host: "1.2.3.4", Port: 554, Transport: "tcp"}
+	if got := strings.Join(CameraInput(rtsp, true), " "); !strings.Contains(got, "-rtsp_transport tcp") {
+		t.Fatalf("rtsp input: %s", got)
+	}
+}

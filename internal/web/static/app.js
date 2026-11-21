@@ -207,6 +207,8 @@ function formToConfig() {
     if (el.name === "vystup.rozliseni") {
       const [w, h] = el.value.split("x").map(Number);
       cfg.vystup.sirka = w; cfg.vystup.vyska = h;
+    } else if (el.name === "kamera.fpsWebkamery") {
+      cfg.kamera.fpsWebkamery = Number(el.value);
     } else if (el.name === "vystup.fps") {
       cfg.vystup.fps = Number(el.value);
     } else {
@@ -227,7 +229,11 @@ function configToForm(view) {
       el.value = v;
       continue;
     }
-    const v = cfg[sec][key];
+    let v = cfg[sec][key];
+    if (el.name === "kamera.zdroj" && !v) v = "rtsp";
+    if (el.tagName === "SELECT" && v != null && v !== "" && ![...el.options].some((o) => o.value === String(v))) {
+      el.add(new Option(String(v), String(v))); // e.g. a webcam that is not plugged in right now
+    }
     if (el.type === "checkbox") el.checked = !!v;
     else el.value = v ?? "";
     if (el.dataset.secret) {
@@ -241,10 +247,55 @@ async function loadSettings() {
   try {
     loaded = await api("GET", "/api/nastaveni");
     configToForm(loaded);
+    updateCamSource();
     updateYtSettings();
     refreshCloud();
     $("saveMsg").textContent = "";
   } catch (e) { $("saveMsg").textContent = e.message; }
+}
+
+// ---- webcam
+let wcLoaded = false;
+function updateCamSource() {
+  const wc = $("camSource").value === "webkamera";
+  $("camWebcam").hidden = !wc;
+  $("camRtsp").hidden = wc;
+  if (wc && !wcLoaded) loadWebcams();
+}
+$("camSource").onchange = updateCamSource;
+$("btnWcRefresh").onclick = () => loadWebcams();
+$("wcDev").onchange = () => loadWebcamModes();
+
+function fillSelect(sel, items, keepFirst) {
+  const cur = sel.value;
+  const first = keepFirst ? [sel.options[0]] : [];
+  sel.replaceChildren(...first, ...items.map(([v, t]) => new Option(t, v)));
+  if (cur && ![...sel.options].some((o) => o.value === cur)) sel.add(new Option(cur + " (nepřipojeno)", cur));
+  sel.value = cur || (sel.options[0] ? sel.options[0].value : "");
+}
+
+async function loadWebcams() {
+  const msg = $("wcMsg");
+  msg.textContent = "Hledám zařízení…"; msg.className = "small muted";
+  try {
+    const r = await api("GET", "/api/webkamery");
+    wcLoaded = true;
+    fillSelect($("wcDev"), r.kamery.map((n) => [n, n]), false);
+    fillSelect($("wcMic"), r.mikrofony.map((n) => [n, n]), true);
+    msg.textContent = r.kamery.length ? `Nalezeno – kamery: ${r.kamery.length}, mikrofony: ${r.mikrofony.length}`
+      : "Žádná webkamera nenalezena – je připojená?";
+    msg.className = r.kamery.length ? "small ok-text" : "small bad-text";
+    await loadWebcamModes();
+  } catch (e) { msg.textContent = e.message; msg.className = "small bad-text"; }
+}
+
+async function loadWebcamModes() {
+  const dev = $("wcDev").value;
+  if (!dev) return;
+  try {
+    const r = await api("GET", "/api/webkamery/rezimy?nazev=" + encodeURIComponent(dev));
+    fillSelect($("wcRes"), (r.rezimy || []).map((m) => [m.rozliseni, `${m.rozliseni.replace("x", " × ")} (až ${m.fps} fps)`]), true);
+  } catch (e) { $("wcMsg").textContent = e.message; $("wcMsg").className = "small bad-text"; }
 }
 
 function updateYtSettings() {

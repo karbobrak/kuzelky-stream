@@ -135,7 +135,7 @@ func (a *App) uniqueFile(name string) string {
 		if i > 1 {
 			cand = fmt.Sprintf("%s_%d.json", base, i)
 		}
-		if _, err := os.Stat(filepath.Join(a.mt.store.Dir, "zapasy", cand)); err != nil {
+		if _, err := os.Stat(filepath.Join(a.mt.store.Dir, "zapasy", cand)); err != nil && !a.tombstoned("zapas:"+cand) {
 			return cand
 		}
 	}

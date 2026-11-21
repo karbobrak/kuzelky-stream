@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -69,7 +70,7 @@ func TestEncoder(ctx context.Context, ffmpeg, enc string) error {
 func Snapshot(ctx context.Context, ffmpeg string, cam config.Camera) ([]byte, error) {
 	ctx, cancel := context.WithTimeout(ctx, 20*time.Second)
 	defer cancel()
-	in := []string{"-rtsp_transport", cam.Transport, "-timeout", "5000000", "-i", cam.CameraURL()}
+	in := CameraInput(cam, false)
 	if cam.TestSource {
 		in = []string{"-f", "lavfi", "-i", "testsrc2=size=2880x1616:rate=1"}
 	}
@@ -98,13 +99,12 @@ type ProbeResult struct {
 	AudioCodec string
 }
 
-// Probe asks ffmpeg what the RTSP stream contains. (ffmpeg, not ffprobe: one tool less to ship.)
-func Probe(ctx context.Context, ffmpeg, rtspURL, transport string) (ProbeResult, error) {
+// Probe asks ffmpeg what the camera sends. (ffmpeg, not ffprobe: one tool less to ship.)
+func Probe(ctx context.Context, ffmpeg string, cam config.Camera) (ProbeResult, error) {
 	ctx, cancel := context.WithTimeout(ctx, 20*time.Second)
 	defer cancel()
-	cmd := exec.CommandContext(ctx, ffmpeg, "-hide_banner", "-loglevel", "info",
-		"-rtsp_transport", transport, "-timeout", "5000000",
-		"-i", rtspURL, "-t", "0.1", "-f", "null", "-")
+	args := append([]string{"-hide_banner", "-loglevel", "info"}, CameraInput(cam, true)...)
+	cmd := exec.CommandContext(ctx, ffmpeg, append(args, "-t", "0.1", "-f", "null", "-")...)
 	hideWindow(cmd)
 	out, err := cmd.CombinedOutput()
 	r := parseProbe(string(out))
@@ -115,6 +115,9 @@ func Probe(ctx context.Context, ffmpeg, rtspURL, transport string) (ProbeResult,
 		}
 		if err == nil {
 			return r, fmt.Errorf("kamera neposílá video")
+		}
+		if cam.IsWebcam() {
+			return r, fmt.Errorf("webkameru nelze otevřít (není připojená, nebo ji používá jiný program?): %s", last)
 		}
 		return r, fmt.Errorf("kamera neodpovídá: %v %s", err, last)
 	}
@@ -145,4 +148,83 @@ func parseProbe(out string) ProbeResult {
 		}
 	}
 	return r
+}
+
+// DShowDevices lists the webcams and microphones Windows offers (DirectShow names).
+func DShowDevices(ctx context.Context, ffmpeg string) (video, audio []string, err error) {
+	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, ffmpeg, "-hide_banner", "-list_devices", "true", "-f", "dshow", "-i", "dummy")
+	hideWindow(cmd)
+	out, _ := cmd.CombinedOutput() // always "fails" on the dummy input
+	if ctx.Err() != nil {
+		return nil, nil, ctx.Err()
+	}
+	video, audio = parseDShowDevices(string(out))
+	return video, audio, nil
+}
+
+var reDShowDev = regexp.MustCompile(`\] "(.+)" \((video|audio|none)\)`)
+
+func parseDShowDevices(out string) (video, audio []string) {
+	for _, line := range strings.Split(out, "\n") {
+		m := reDShowDev.FindStringSubmatch(strings.TrimRight(line, "\r"))
+		switch {
+		case m == nil:
+		case m[2] == "video":
+			video = append(video, m[1])
+		case m[2] == "audio":
+			audio = append(audio, m[1])
+		}
+	}
+	return video, audio
+}
+
+// WebcamModes lists a webcam's resolutions with the highest frame rate each offers, largest first.
+func WebcamModes(ctx context.Context, ffmpeg, device string) ([]WebcamMode, error) {
+	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, ffmpeg, "-hide_banner", "-list_options", "true", "-f", "dshow", "-i", "video="+device)
+	hideWindow(cmd)
+	out, _ := cmd.CombinedOutput()
+	if ctx.Err() != nil {
+		return nil, ctx.Err()
+	}
+	modes := parseWebcamModes(string(out))
+	if len(modes) == 0 {
+		return nil, fmt.Errorf("webkamera „%s“ nevrátila žádné rozlišení (není připojená, nebo ji používá jiný program?)", device)
+	}
+	return modes, nil
+}
+
+type WebcamMode struct {
+	Size string `json:"rozliseni"`
+	FPS  int    `json:"fps"`
+}
+
+var reDShowMode = regexp.MustCompile(`max s=(\d+)x(\d+) fps=([\d.]+)`)
+
+func parseWebcamModes(out string) []WebcamMode {
+	best := map[string]int{}
+	area := map[string]int{}
+	for _, line := range strings.Split(out, "\n") {
+		m := reDShowMode.FindStringSubmatch(line)
+		if m == nil {
+			continue
+		}
+		w, _ := strconv.Atoi(m[1])
+		h, _ := strconv.Atoi(m[2])
+		f, _ := strconv.ParseFloat(m[3], 64)
+		size := m[1] + "x" + m[2]
+		if int(f+0.5) > best[size] {
+			best[size] = int(f + 0.5)
+		}
+		area[size] = w * h
+	}
+	var out2 []WebcamMode
+	for s, f := range best {
+		out2 = append(out2, WebcamMode{Size: s, FPS: f})
+	}
+	sort.Slice(out2, func(i, j int) bool { return area[out2[i].Size] > area[out2[j].Size] })
+	return out2
 }

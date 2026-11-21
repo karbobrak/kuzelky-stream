@@ -23,7 +23,7 @@ import (
 // uploads what Drive lacks and downloads matches/rosters the computer lacks (e.g. a new notebook).
 //
 // Drive files: zapas_<file>.json, tym_<file>.json, nastaveni-grafiky.json, each with appProperties
-// typ (zapas|tym|grafika), soubor (local file name) and zmeneno (local change time, unix ms).
+// typ (zapas|tym|grafika|smazane), soubor (local file name) and zmeneno (local change time, unix ms).
 
 const (
 	folderName   = "KuzelkyStream"
@@ -38,6 +38,7 @@ const (
 
 type cloudState struct {
 	mu        sync.Mutex
+	tombMu    sync.Mutex      // guards data\smazane.json
 	dirty     map[string]bool // "zapas:<file>", "tym:<file>", "grafika"
 	reconcile bool
 	ids       map[string]string // Drive name → file id
@@ -180,6 +181,9 @@ func (a *App) cloudSyncItems(ctx context.Context, c config.Config, dirty map[str
 		a.cl.ids = ids
 		a.cl.mu.Unlock()
 		if reconcile {
+			if files, err = a.applyTombstones(ctx, cl, c, folder, files); err != nil {
+				return err
+			}
 			if err := a.reconcileFiles(ctx, cl, files, dirty); err != nil {
 				return err
 			}

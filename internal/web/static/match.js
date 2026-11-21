@@ -205,6 +205,23 @@ function formToMatch() {
 async function loadRosters() {
   try { rosters = (await api("GET", "/api/soupisky")) || []; } catch (_) { rosters = []; }
   $("teamList").replaceChildren(...rosters.map((r) => new Option(r.nazev)));
+  const tb = $("rosterList");
+  tb.replaceChildren();
+  if (!rosters.length) { tb.innerHTML = `<tr><td class="muted">Zatím žádné.</td></tr>`; return; }
+  for (const r of rosters) {
+    const tr = document.createElement("tr");
+    const players = (r.hraci || []).filter(Boolean);
+    tr.innerHTML = `<td><b>${esc(r.nazev)}</b></td><td class="muted small">${esc(players.join(", "))}</td><td></td>`;
+    const del = document.createElement("button");
+    del.type = "button"; del.className = "del"; del.textContent = "Smazat";
+    del.onclick = async () => {
+      if (!confirm(`Smazat tým „${r.nazev}“ a jeho soupisku?\n\nSmaže se na tomto počítači i na Google Disku. Uložená utkání zůstanou.`)) return;
+      try { await api("POST", "/api/soupisky/smazat", { soubor: r.soubor }); loadRosters(); }
+      catch (err) { $("mfMsg").textContent = err.message; }
+    };
+    tr.lastElementChild.append(del);
+    tb.append(tr);
+  }
 }
 
 // Picking a known team fills its short name and players (only into empty fields).
@@ -267,7 +284,19 @@ async function loadSaved() {
       try { view = await api("POST", "/api/zapasy/otevrit", { soubor: s.soubor }); renderForm(); loadSaved(); }
       catch (err) { $("mfMsg").textContent = err.message; }
     };
-    tr.lastElementChild.append(b);
+    const del = document.createElement("button");
+    del.type = "button"; del.className = "del"; del.textContent = "Smazat";
+    del.onclick = async () => {
+      const what = `${s.datum} ${s.domaci} – ${s.hoste}`;
+      const openNote = current ? "Utkání je právě otevřené – zavře se a grafika přestane ukazovat skóre.\n\n" : "";
+      if (!confirm(`Smazat utkání ${what}?\n\n${openNote}` +
+        "Smaže se na tomto počítači, na Google Disku (do koše) i z tabulky výsledků.")) return;
+      try {
+        view = await api("POST", "/api/zapasy/smazat", { soubor: s.soubor });
+        renderForm(); loadSaved();
+      } catch (err) { $("mfMsg").textContent = err.message; }
+    };
+    tr.lastElementChild.append(b, del);
     tb.append(tr);
   }
 }

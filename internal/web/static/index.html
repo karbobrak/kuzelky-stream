@@ -190,6 +190,12 @@
       <h2>Uložená utkání</h2>
       <table class="saved"><tbody id="savedList"></tbody></table>
     </div>
+
+    <div class="card">
+      <h2>Uložené týmy</h2>
+      <p class="muted small">Soupisky se ukládají samy z utkání a nabízejí se při zakládání dalšího.</p>
+      <table class="saved"><tbody id="rosterList"></tbody></table>
+    </div>
   </section>
 
   <!-- ============================================================ OBRAZ A GRAFIKA -->
@@ -277,6 +283,32 @@
         <legend>Kamera <span class="tag cam">restart kamery</span></legend>
         <label class="check"><input type="checkbox" name="kamera.testovaciZdroj"> Testovací obrazec místo kamery</label>
         <div class="row">
+          <label>Zdroj obrazu <select name="kamera.zdroj" id="camSource">
+            <option value="rtsp">IP kamera (RTSP)</option>
+            <option value="webkamera">Webkamera (USB nebo vestavěná)</option>
+          </select></label>
+        </div>
+        <div id="camWebcam" class="stack" hidden>
+          <div class="row">
+            <label>Webkamera <select name="kamera.webkamera" id="wcDev"></select></label>
+            <label>Mikrofon <select name="kamera.mikrofon" id="wcMic"><option value="">bez zvuku</option></select></label>
+          </div>
+          <div class="row">
+            <label class="narrow">Rozlišení <select name="kamera.rozliseniWebkamery" id="wcRes"><option value="">výchozí</option></select></label>
+            <label class="narrow">Snímků za sekundu <select name="kamera.fpsWebkamery" id="wcFps">
+              <option value="0">výchozí</option><option value="15">15</option><option value="25">25</option>
+              <option value="30">30</option><option value="50">50</option><option value="60">60</option>
+            </select></label>
+          </div>
+          <div class="row actions">
+            <button type="button" id="btnWcRefresh">Znovu načíst zařízení</button>
+            <span id="wcMsg" class="small muted"></span>
+          </div>
+          <p class="muted small">Webkameru může používat jen jeden program. Zavřete Teams, Zoom ap. Během vysílání nejde
+            vyzkoušet ani nafotit pro výřez.</p>
+        </div>
+        <div id="camRtsp" class="stack">
+        <div class="row">
           <label>Adresa (IP) <input name="kamera.host" placeholder="192.168.100.163"></label>
           <label class="narrow">Port <input name="kamera.port" type="number" min="1" max="65535"></label>
         </div>
@@ -290,6 +322,7 @@
         </div>
         <label>Vlastní úplná URL <span class="muted small">(nepovinné, přebije údaje výše)</span>
           <input name="kamera.url" placeholder="rtsp://…"></label>
+        </div>
         <div class="row actions">
           <button type="button" id="btnTestCam">Otestovat kameru</button>
           <span id="camTest" class="small"></span>

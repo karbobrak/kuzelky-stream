@@ -26,6 +26,10 @@ type snapshotCache struct {
 // CameraSnapshot returns a recent full-resolution JPEG from the camera (cached for 3 s unless fresh).
 func (a *App) CameraSnapshot(ctx context.Context, fresh bool) ([]byte, error) {
 	cam := a.Config().Camera
+	if cam.IsWebcam() && a.Running() {
+		// A webcam can be opened by one program only, and the broadcast holds it.
+		return nil, errBusyWebcam
+	}
 	a.snap.mu.Lock()
 	defer a.snap.mu.Unlock()
 	if !fresh && a.snap.data != nil && a.snap.key == cam && time.Since(a.snap.at) < 3*time.Second {

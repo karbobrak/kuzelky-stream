@@ -141,3 +141,13 @@ func (c *Client) MoveToFolder(ctx context.Context, fileID, folderID string) erro
 	return c.do(ctx, "PATCH", driveBase+"files/"+url.PathEscape(fileID)+"?"+q.Encode(), "application/json",
 		strings.NewReader("{}"), nil)
 }
+
+// Trash moves a file to the Drive bin (recoverable there for 30 days).
+func (c *Client) Trash(ctx context.Context, fileID string) error {
+	err := c.do(ctx, "PATCH", driveBase+"files/"+url.PathEscape(fileID)+"?fields=id", "application/json",
+		strings.NewReader(`{"trashed":true}`), nil)
+	if isNotFound(err) {
+		return nil
+	}
+	return err
+}

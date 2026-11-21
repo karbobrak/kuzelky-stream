@@ -27,6 +27,32 @@ type Camera struct {
 	Transport  string `json:"transport"` // tcp | udp
 	// URL, when set, overrides Host/Port/User/Password/Path.
 	URL string `json:"url"`
+
+	// Source: "rtsp" (IP camera, the default) | "webkamera" (USB or built-in camera, DirectShow).
+	Source string `json:"zdroj"`
+	// Webcam: DirectShow device names as Windows lists them; Mic "" = no sound from the webcam.
+	Webcam    string `json:"webkamera"`
+	Mic       string `json:"mikrofon"`
+	WebcamRes string `json:"rozliseniWebkamery"` // "1920x1080"; "" = what the camera offers by default
+	WebcamFPS int    `json:"fpsWebkamery"`       // 0 = the camera's default
+}
+
+// IsWebcam: the picture comes from a local webcam instead of an RTSP camera.
+func (c Camera) IsWebcam() bool { return !c.TestSource && c.Source == "webkamera" }
+
+// Describe says where the picture comes from, without secrets (for logs and UI).
+func (c Camera) Describe() string {
+	switch {
+	case c.TestSource:
+		return "testovací obrazec"
+	case c.IsWebcam():
+		s := "webkamera „" + c.Webcam + "“"
+		if c.Mic != "" {
+			s += ", mikrofon „" + c.Mic + "“"
+		}
+		return s
+	}
+	return c.MaskedCameraURL()
 }
 
 type YouTube struct {
@@ -133,6 +159,7 @@ func Default() Config {
 			User:      "admin",
 			Path:      "h264Preview_01_main",
 			Transport: "tcp",
+			Source:    "rtsp",
 		},
 		YouTube: YouTube{
 			Mode:    "api",
@@ -231,7 +258,22 @@ func (c Config) Validate() error {
 		return fmt.Errorf("datový tok zvuku musí být 32–320 kb/s (%d)", c.Audio.Bitrate)
 	}
 	cam := c.Camera
-	if !cam.TestSource && cam.URL == "" && (cam.Host == "" || cam.Port <= 0 || cam.Port > 65535) {
+	switch cam.Source {
+	case "", "rtsp", "webkamera":
+	default:
+		return fmt.Errorf("neznámý zdroj obrazu %q (rtsp | webkamera)", cam.Source)
+	}
+	if cam.IsWebcam() {
+		if strings.TrimSpace(cam.Webcam) == "" {
+			return fmt.Errorf("vyberte webkameru")
+		}
+		if cam.WebcamRes != "" && !reRes.MatchString(cam.WebcamRes) {
+			return fmt.Errorf("rozlišení webkamery musí být ve tvaru 1920x1080 (%q)", cam.WebcamRes)
+		}
+		if cam.WebcamFPS < 0 || cam.WebcamFPS > 120 {
+			return fmt.Errorf("snímky za sekundu webkamery musí být 0–120 (%d)", cam.WebcamFPS)
+		}
+	} else if !cam.TestSource && cam.URL == "" && (cam.Host == "" || cam.Port <= 0 || cam.Port > 65535) {
 		return fmt.Errorf("vyplňte adresu a port kamery")
 	}
 	if cam.Transport != "tcp" && cam.Transport != "udp" {
@@ -292,6 +334,8 @@ func (c Camera) CameraURL() string {
 	}
 	return u.String()
 }
+
+var reRes = regexp.MustCompile(`^\d{2,5}x\d{2,5}$`)
 
 var credsInURL = regexp.MustCompile(`(?i)(rtsps?|rtmps?|https?)://([^:/@\s]*):[^@\s]*@`)
 

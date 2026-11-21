@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/url"
+	"slices"
 )
 
 // CreateSpreadsheet creates a spreadsheet with the given sheet (tab) names; returns its id.
@@ -80,4 +81,43 @@ func (c *Client) Append(ctx context.Context, id, rng string, rows [][]any) error
 	u := sheetsBase + "spreadsheets/" + url.PathEscape(id) + "/values/" + url.PathEscape(rng) +
 		":append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS"
 	return c.do(ctx, "POST", u, "application/json", bytes.NewReader(b), nil)
+}
+
+// SheetIDs returns the numeric id of each tab by its title (needed to delete rows).
+func (c *Client) SheetIDs(ctx context.Context, id string) (map[string]int64, error) {
+	var r struct {
+		Sheets []struct {
+			Properties struct {
+				ID    int64  `json:"sheetId"`
+				Title string `json:"title"`
+			} `json:"properties"`
+		} `json:"sheets"`
+	}
+	u := sheetsBase + "spreadsheets/" + url.PathEscape(id) + "?fields=sheets.properties(sheetId,title)"
+	if err := c.do(ctx, "GET", u, "", nil, &r); err != nil {
+		return nil, err
+	}
+	out := map[string]int64{}
+	for _, s := range r.Sheets {
+		out[s.Properties.Title] = s.Properties.ID
+	}
+	return out, nil
+}
+
+// DeleteRows removes whole rows (1-based numbers) from one tab.
+func (c *Client) DeleteRows(ctx context.Context, id string, sheetID int64, rows []int) error {
+	if len(rows) == 0 {
+		return nil
+	}
+	rows = slices.Clone(rows)
+	slices.Sort(rows)
+	slices.Reverse(rows) // bottom up, so the remaining numbers stay valid
+	var reqs []map[string]any
+	for _, r := range rows {
+		reqs = append(reqs, map[string]any{"deleteDimension": map[string]any{"range": map[string]any{
+			"sheetId": sheetID, "dimension": "ROWS", "startIndex": r - 1, "endIndex": r}}})
+	}
+	b, _ := json.Marshal(map[string]any{"requests": reqs})
+	return c.do(ctx, "POST", sheetsBase+"spreadsheets/"+url.PathEscape(id)+":batchUpdate",
+		"application/json", bytes.NewReader(b), nil)
 }

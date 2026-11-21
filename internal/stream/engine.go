@@ -300,13 +300,16 @@ func (e *Engine) cameraHasAudio(ctx context.Context) (bool, error) {
 	if c.Camera.TestSource {
 		return true, nil
 	}
+	if c.Camera.IsWebcam() {
+		return c.Camera.Mic != "", nil
+	}
 	switch atomic.LoadInt32(&e.camAudio) {
 	case 0:
 		return false, nil
 	case 1:
 		return true, nil
 	}
-	pr, err := Probe(ctx, e.o.FFmpeg, c.Camera.CameraURL(), c.Camera.Transport)
+	pr, err := Probe(ctx, e.o.FFmpeg, c.Camera)
 	if err != nil {
 		return false, errors.New(c.Mask(err.Error()))
 	}

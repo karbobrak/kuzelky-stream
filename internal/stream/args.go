@@ -70,14 +70,11 @@ func IngestArgs(c config.Config, withAudio bool, audioPort int) []string {
 			a = append(a, "-re", "-f", "lavfi", "-i", "sine=frequency=440:sample_rate=48000")
 		}
 	} else {
-		if o.HWDecode {
+		if o.HWDecode && !c.Camera.IsWebcam() {
 			a = append(a, "-hwaccel", "d3d11va")
 		}
-		a = append(a,
-			"-rtsp_transport", c.Camera.Transport,
-			"-timeout", "5000000",
-			"-fflags", "nobuffer", "-flags", "low_delay",
-			"-i", c.Camera.CameraURL())
+		a = append(a, "-fflags", "nobuffer", "-flags", "low_delay")
+		a = append(a, CameraInput(c.Camera, withAudio)...)
 	}
 	a = append(a,
 		"-map", "0:v:0",
@@ -95,6 +92,28 @@ func IngestArgs(c config.Config, withAudio bool, audioPort int) []string {
 			fmt.Sprintf("tcp://127.0.0.1:%d", audioPort))
 	}
 	return a
+}
+
+// CameraInput is the ffmpeg input of the camera: an RTSP stream, or a webcam through DirectShow
+// (with its microphone when withAudio and one is chosen).
+func CameraInput(cam config.Camera, withAudio bool) []string {
+	if !cam.IsWebcam() {
+		return []string{"-rtsp_transport", cam.Transport, "-timeout", "5000000", "-i", cam.CameraURL()}
+	}
+	// A big real-time buffer: DirectShow drops frames ("real-time buffer full") when ffmpeg is
+	// briefly busy. Small audio buffer = low latency between picture and sound.
+	a := []string{"-f", "dshow", "-rtbufsize", "256M", "-audio_buffer_size", "50"}
+	if cam.WebcamRes != "" {
+		a = append(a, "-video_size", cam.WebcamRes)
+	}
+	if cam.WebcamFPS > 0 {
+		a = append(a, "-framerate", strconv.Itoa(cam.WebcamFPS))
+	}
+	in := "video=" + cam.Webcam
+	if withAudio && cam.Mic != "" {
+		in += ":audio=" + cam.Mic
+	}
+	return append(a, "-i", in)
 }
 
 // OutputArgs: ffmpeg #2 takes the finished picture (raw I420 on stdin) and PCM audio (from the app's

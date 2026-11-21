@@ -99,6 +99,7 @@ v prohlížeči. Nic není napevno v kódu a nic se nemusí upravovat ručně v 
 |---|---|---|
 | Kamera | IP/host, port RTSP, uživatel, heslo, cesta streamu, transport | `192.168.100.163`, `554`, –, –, `h264Preview_01_main`, `tcp` |
 | Kamera | Vlastní úplná URL (přebije předchozí) | prázdné |
+| Kamera | Zdroj obrazu: IP kamera (RTSP) / webkamera (DirectShow: zařízení, mikrofon, rozlišení, fps) | RTSP |
 | YouTube | URL serveru, klíč streamu | `rtmp://a.rtmp.youtube.com/live2`, – |
 | Výstup | Rozlišení, fps, datový tok videa, kodér, preset x264 | 1280×720, 25, 4000 kb/s, `auto`, `veryfast` |
 | Zvuk | Zdroj (kamera / ticho), datový tok, zesílení | kamera, 128 kb/s, 0 dB |
@@ -425,3 +426,16 @@ testem s odpojením sítě.
 
 Později (mimo první verzi): pojmenované a naplánované přenosy přes YouTube API (OAuth), ikona v oznamovací
 oblasti místo okna konzole, napojení na automaty (snímání čítačů), export výsledků.
+
+## Doplněno 2026-11-21: mazání a webkamera
+
+- **Mazání utkání a týmů** (záložka Utkání, tlačítka Smazat). Smaže se lokální soubor a do `data\smazane.json`
+  se zapíše záznam o smazání. Cloudová synchronizace pak přesune soubor na Disku do koše, smaže řádky utkání
+  z tabulky výsledků (oba listy) a nahraje `smazane.json` na Disk. Ostatní notebooky při synchronizaci smažou
+  svou kopii, místo aby ji nahrály zpět. Položka změněná po čase smazání (např. tým, který znovu hraje) se
+  bere jako nová a záznam o smazání se zruší. Nové utkání nedostane jméno souboru smazaného utkání.
+- **Webkamera jako zdroj obrazu** (Nastavení → Kamera → Zdroj obrazu). FFmpeg čte zařízení přes DirectShow
+  (`-f dshow -i video=…:audio=…`), mikrofon je volitelný (bez něj jde ticho). Seznam zařízení a rozlišení
+  aplikace zjistí z ffmpeg (`-list_devices`, `-list_options`). Webkameru smí mít otevřenou jen jeden program,
+  takže během vysílání nejde test kamery ani snímek pro výřez (aplikace to hlásí). Výpadek / odpojení USB řeší
+  stejný supervizor jako u RTSP (nový pokus každé 3 s).

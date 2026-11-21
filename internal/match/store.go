@@ -130,6 +130,7 @@ type Roster struct {
 	Name    string   `json:"nazev"`
 	Short   string   `json:"zkratka"`
 	Players []string `json:"hraci"`
+	File    string   `json:"soubor,omitempty"` // filled by Rosters, not stored
 }
 
 // RosterFile is the file name of a team's roster.
@@ -139,6 +140,7 @@ func (s Store) SaveRoster(r Roster) error {
 	if strings.TrimSpace(r.Name) == "" {
 		return errors.New("soupiska bez názvu týmu")
 	}
+	r.File = ""
 	return writeAtomic(filepath.Join(s.teamDir(), RosterFile(r.Name)), r)
 }
 
@@ -148,9 +150,14 @@ func (s Store) Rosters() []Roster {
 	for _, f := range files {
 		var r Roster
 		if b, err := os.ReadFile(f); err == nil && json.Unmarshal(b, &r) == nil {
+			r.File = filepath.Base(f)
 			out = append(out, r)
 		}
 	}
 	sort.Slice(out, func(i, j int) bool { return out[i].Name < out[j].Name })
 	return out
 }
+
+// MatchPath and RosterPath are the local files of a saved match and of a roster file name.
+func (s Store) MatchPath(name string) string  { return filepath.Join(s.matchDir(), filepath.Base(name)) }
+func (s Store) RosterPath(file string) string { return filepath.Join(s.teamDir(), filepath.Base(file)) }

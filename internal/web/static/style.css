@@ -205,6 +205,8 @@ table.players input { width: 100%; }
 table.saved { width: 100%; border-collapse: collapse; }
 table.saved td { padding: 6px 4px; border-bottom: 1px solid var(--border); }
 table.saved td:last-child { text-align: right; }
+table.saved td:last-child button { margin-left: 6px; }
+button.del { color: var(--bad); }
 @media (max-width: 700px) { .teams { grid-template-columns: 1fr; } }
 
 .yt-title { font-weight: 600; margin: 0 0 6px; }
@@ -218,6 +220,7 @@ details[open] summary { margin-bottom: 10px; }
 
 /* settings */
 fieldset.card { display: flex; flex-direction: column; gap: 10px; }
+.stack { display: flex; flex-direction: column; gap: 10px; }
 legend { font-weight: 600; padding: 0 6px; margin-left: -6px; }
 label { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 180px; }
 label.narrow { flex: 0 1 200px; min-width: 120px; }

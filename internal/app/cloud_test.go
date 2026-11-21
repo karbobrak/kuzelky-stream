@@ -32,6 +32,7 @@ type fakeFile struct {
 	Name, Parent, Mime string
 	Data               []byte
 	Props              map[string]string
+	Trashed            bool
 }
 
 func (f *fakeGoogle) id() string { f.nextID++; return "F" + string(rune('A'+f.nextID)) }
@@ -49,7 +50,7 @@ func (f *fakeGoogle) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		var out []map[string]any
 		for id, fl := range f.files {
 			if (strings.Contains(q, "mimeType='application/vnd.google-apps.folder'") && fl.Mime == folderMimeForTest && strings.Contains(q, "'"+fl.Name+"'")) ||
-				(strings.Contains(q, "in parents") && strings.Contains(q, "'"+fl.Parent+"'") && fl.Parent != "") {
+				(strings.Contains(q, "in parents") && strings.Contains(q, "'"+fl.Parent+"'") && fl.Parent != "" && !fl.Trashed) {
 				out = append(out, map[string]any{"id": id, "name": fl.Name, "appProperties": fl.Props, "modifiedTime": time.Now().Format(time.RFC3339)})
 			}
 		}
@@ -63,7 +64,12 @@ func (f *fakeGoogle) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case strings.HasPrefix(p, "/drive/v3/files/") && r.URL.Query().Get("alt") == "media":
 		fl := f.files[strings.TrimPrefix(p, "/drive/v3/files/")]
 		w.Write(fl.Data)
-	case strings.HasPrefix(p, "/drive/v3/files/") && r.Method == "PATCH": // move to folder
+	case strings.HasPrefix(p, "/drive/v3/files/") && r.Method == "PATCH": // move to folder / to the bin
+		var b struct{ Trashed bool }
+		json.NewDecoder(r.Body).Decode(&b)
+		if fl := f.files[strings.TrimPrefix(p, "/drive/v3/files/")]; fl != nil && b.Trashed {
+			fl.Trashed = true
+		}
 		io.WriteString(w, `{}`)
 	case strings.HasPrefix(p, "/drive/v3/files/"):
 		if _, ok := f.files[strings.TrimPrefix(p, "/drive/v3/files/")]; !ok {
@@ -114,12 +120,31 @@ func (f *fakeGoogle) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			col = append(col, row[len(row)-1])
 		}
 		json.NewEncoder(w).Encode(map[string]any{"values": [][]string{col}})
+	case p == "/sheets/v4/spreadsheets/S1:batchUpdate": // delete rows
+		var b struct {
+			Requests []struct {
+				DeleteDimension struct {
+					Range struct {
+						SheetID    int64
+						StartIndex int
+					}
+				}
+			}
+		}
+		json.NewDecoder(r.Body).Decode(&b)
+		tabs := []string{tabMatches, tabPlayers}
+		for _, rq := range b.Requests {
+			rg := rq.DeleteDimension.Range
+			rows := f.sheets["S1"][tabs[rg.SheetID]]
+			f.sheets["S1"][tabs[rg.SheetID]] = append(rows[:rg.StartIndex:rg.StartIndex], rows[rg.StartIndex+1:]...)
+		}
+		io.WriteString(w, `{}`)
 	case strings.HasPrefix(p, "/sheets/v4/spreadsheets/"):
 		if _, ok := f.sheets[strings.TrimPrefix(p, "/sheets/v4/spreadsheets/")]; !ok {
 			w.WriteHeader(404)
 			return
 		}
-		io.WriteString(w, `{}`)
+		io.WriteString(w, `{"sheets":[{"properties":{"sheetId":0,"title":"`+tabMatches+`"}},{"properties":{"sheetId":1,"title":"`+tabPlayers+`"}}]}`)
 	default:
 		w.WriteHeader(404)
 	}
@@ -262,5 +287,116 @@ func TestCloudSyncFreshInstall(t *testing.T) {
 	}
 	if !found {
 		t.Fatal("graphics settings were not uploaded")
+	}
+}
+
+// Deleting on one notebook removes the match/team on Drive, in the spreadsheet and on the other
+// notebook, which must not upload its copy back.
+func TestCloudDelete(t *testing.T) {
+	fg := &fakeGoogle{files: map[string]*fakeFile{}, sheets: map[string]map[string][][]string{}}
+	srv := httptest.NewServer(fg)
+	defer srv.Close()
+	google.SetBaseURLForTest(srv.URL)
+
+	newApp := func(cfg config.Config) *App {
+		dir := t.TempDir()
+		return New(dir, filepath.Join(dir, "config.json"), cfg, "ffmpeg", log.New(io.Discard, "", 0), NewLogBuf(10))
+	}
+	cfg := config.Default()
+	cfg.YouTube.ClientID, cfg.YouTube.ClientSecret, cfg.Cloud.RefreshToken = "id", "secret", "R"
+	cfg.Cloud.Scopes = google.ScopeDriveFile
+	a := newApp(cfg)
+	addMatch := func(app *App, home, away string) string {
+		m := match.New(cfg.Rules)
+		m.Date, m.Home.Name, m.Away.Name = "2026-11-21", home, away
+		m.Duels[0].HomePlayer = "Novák"
+		if err := app.NewMatch(m); err != nil {
+			t.Fatal(err)
+		}
+		return app.MatchView().File
+	}
+	sync := func(app *App) {
+		t.Helper()
+		if err := app.SyncNow(t.Context()); err != nil {
+			t.Fatal(err)
+		}
+	}
+	keep := addMatch(a, "Skutečný TJ", "Opravdový SK")
+	test := addMatch(a, "Test A", "Test B")
+	sync(a)
+	b := newApp(a.Config())
+	sync(b)
+	if len(b.SavedMatches()) != 2 {
+		t.Fatalf("B has %d matches before delete", len(b.SavedMatches()))
+	}
+	onDrive := func(name string) bool {
+		for _, f := range fg.files {
+			if f.Name == name && !f.Trashed {
+				return true
+			}
+		}
+		return false
+	}
+	matchRows := func() int { return len(fg.sheets["S1"][tabMatches]) }
+	if matchRows() != 3 {
+		t.Fatalf("sheet rows = %d, want header + 2", matchRows())
+	}
+
+	if err := a.DeleteMatch(test); err != nil {
+		t.Fatal(err)
+	}
+	if a.MatchView().File != "" {
+		t.Fatal("deleted open match is still open")
+	}
+	if err := a.DeleteRoster(match.RosterFile("Test A")); err != nil {
+		t.Fatal(err)
+	}
+	sync(a)
+	if onDrive("zapas_"+test) || onDrive("tym_"+match.RosterFile("Test A")) {
+		t.Fatal("deleted files are still on Drive")
+	}
+	if !onDrive("zapas_"+keep) || !onDrive("tym_"+match.RosterFile("Test B")) {
+		t.Fatal("other files were removed from Drive")
+	}
+	if matchRows() != 2 || fg.sheets["S1"][tabMatches][1][len(matchHeader())-1] != keep {
+		t.Fatalf("Utkání after delete: %v", fg.sheets["S1"][tabMatches])
+	}
+	for _, row := range fg.sheets["S1"][tabPlayers][1:] {
+		if strings.HasPrefix(row[len(row)-1], test+"#") {
+			t.Fatalf("player row of the deleted match left: %v", row)
+		}
+	}
+
+	// The other notebook drops its copies and does not upload them again.
+	sync(b)
+	if len(b.SavedMatches()) != 1 || b.SavedMatches()[0].File != keep {
+		t.Fatalf("B matches after sync: %v", b.SavedMatches())
+	}
+	for _, r := range b.Rosters() {
+		if r.Name == "Test A" {
+			t.Fatal("B still has the deleted team")
+		}
+	}
+	sync(b)
+	if onDrive("zapas_"+test) || onDrive("tym_"+match.RosterFile("Test A")) {
+		t.Fatal("B uploaded a deleted file back")
+	}
+
+	// A new match gets a fresh file name, and the deleted team comes back once it plays again.
+	again := addMatch(a, "Test A", "Test B")
+	if again == test {
+		t.Fatal("new match reused the deleted file name")
+	}
+	sync(a)
+	if !onDrive("tym_" + match.RosterFile("Test A")) {
+		t.Fatal("team playing again was not backed up")
+	}
+	sync(b)
+	found := false
+	for _, r := range b.Rosters() {
+		found = found || r.Name == "Test A"
+	}
+	if !found {
+		t.Fatal("B did not get the team back")
 	}
 }

@@ -37,6 +37,9 @@ Přenos z kamery v kuželně na YouTube s grafikou skóre, které se zapisuje ru
    - Přepínač Grafika (nebo klávesa G) grafiku úplně skryje.
 4. Po utkání: Vysílání → „Ukončit přenos utkání“. Video na YouTube se uzavře jako záznam.
    Pouhé „Zastavit vysílání“ přenos neukončí. Po novém spuštění pokračuje na stejné adrese.
+5. Omylem založené nebo zkušební utkání či tým: záložka UTKÁNÍ → Smazat.
+   Smaže se na tomto počítači, na Google Disku (do koše) i z tabulky výsledků,
+   ostatní notebooky ho smažou při příští synchronizaci.
 
 
 3. KDYŽ NĚCO NEJDE
@@ -63,6 +66,11 @@ Přenos z kamery v kuželně na YouTube s grafikou skóre, které se zapisuje ru
 Nastavení (záložka NASTAVENÍ, změny se ukládají do config.json):
 - Kamera: IP adresa, uživatel, heslo → Otestovat kameru.
   RTSP musí být v kameře zapnuté. Zvuk: zapněte v kameře mikrofon.
+- Místo IP kamery jde použít webkameru (USB nebo vestavěnou): Zdroj obrazu → Webkamera,
+  vyberte kameru, mikrofon a rozlišení → Otestovat kameru.
+  Webkameru může mít otevřenou jen jeden program (zavřete Teams, Zoom…).
+  Když je obraz šedý se zámkem nebo zvuk tichý: Nastavení Windows → Soukromí → Kamera / Mikrofon
+  → povolit přístup desktopovým aplikacím.
 - YouTube: režim „Přes YouTube API“ → Přihlásit k YouTube → vyberte účet/kanál oddílu.
   Přístup k API (Google Cloud) je v aplikaci vestavěný, nic dalšího se nevyplňuje.
   Google ukáže „aplikace není ověřená“ → Rozšířené → Přejít na Kuzelky Stream.

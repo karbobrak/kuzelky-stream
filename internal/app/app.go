@@ -173,7 +173,7 @@ func (a *App) Start() error {
 	a.eng, a.cancel, a.done, a.encoder, a.started = eng, cancel, done, enc, time.Now()
 	a.mu.Unlock()
 	a.Log.Printf("START vysílání: kodér %s, %dx%d %d fps, cíl %s, kamera %s", enc,
-		cfg.Output.Width, cfg.Output.Height, cfg.Output.FPS, cfg.Output.Target, cfg.Camera.MaskedCameraURL())
+		cfg.Output.Width, cfg.Output.Height, cfg.Output.FPS, cfg.Output.Target, cfg.Camera.Describe())
 	a.KeepAwake(true)
 	go func() {
 		defer close(done)
@@ -346,13 +346,31 @@ func (a *App) ProbeCamera(ctx context.Context, cam config.Camera) (stream.ProbeR
 		return stream.ProbeResult{VideoCodec: "testovací obrazec", Width: 2880, Height: 1616, FPS: "25", HasAudio: true}, nil
 	}
 	c := a.Config()
+	if a.Running() && cam.IsWebcam() && c.Camera.IsWebcam() && cam.Webcam == c.Camera.Webcam {
+		return stream.ProbeResult{}, errBusyWebcam
+	}
 	c.Camera = cam
-	pr, err := stream.Probe(ctx, a.ffmpeg, cam.CameraURL(), cam.Transport)
+	pr, err := stream.Probe(ctx, a.ffmpeg, cam)
 	if err != nil {
 		return pr, errors.New(c.Mask(err.Error()))
 	}
 	return pr, nil
 }
+
+// Webcams lists the webcams and microphones of this PC.
+func (a *App) Webcams(ctx context.Context) (video, audio []string, err error) {
+	return stream.DShowDevices(ctx, a.ffmpeg)
+}
+
+// WebcamModes lists the resolutions a webcam offers.
+func (a *App) WebcamModes(ctx context.Context, device string) ([]stream.WebcamMode, error) {
+	if a.Running() && a.Config().Camera.IsWebcam() && a.Config().Camera.Webcam == device {
+		return nil, errBusyWebcam
+	}
+	return stream.WebcamModes(ctx, a.ffmpeg, device)
+}
+
+var errBusyWebcam = errors.New("webkameru právě používá vysílání – zkuste to, až se nevysílá")
 
 // TestEncoders tries every encoder on this PC.
 func (a *App) TestEncoders(ctx context.Context) map[string]bool {
