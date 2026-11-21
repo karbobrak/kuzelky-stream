@@ -5,6 +5,7 @@ package win
 
 import (
 	"errors"
+	"fmt"
 	"os/exec"
 	"syscall"
 	"unsafe"
@@ -96,4 +97,30 @@ func Confirm(text string) bool { return messageBox(text, mbYesNo|mbIconQuest) ==
 // OpenBrowser opens url in the default browser.
 func OpenBrowser(url string) error {
 	return exec.Command("rundll32", "url.dll,FileProtocolHandler", url).Start()
+}
+
+// Version returns the Windows version and build (e.g. "10.0.19045") and the installed RAM.
+func Version() string {
+	type osVersionInfo struct {
+		size, major, minor, build, platform uint32
+		csd                                 [128]uint16
+	}
+	v := osVersionInfo{}
+	v.size = uint32(unsafe.Sizeof(v))
+	_, _, _ = syscall.NewLazyDLL("ntdll.dll").NewProc("RtlGetVersion").Call(uintptr(unsafe.Pointer(&v)))
+	s := fmt.Sprintf("%d.%d.%d", v.major, v.minor, v.build)
+
+	type memoryStatusEx struct {
+		length, memoryLoad           uint32
+		totalPhys, availPhys         uint64
+		totalPageFile, availPageFile uint64
+		totalVirtual, availVirtual   uint64
+		availExtendedVirtual         uint64
+	}
+	m := memoryStatusEx{}
+	m.length = uint32(unsafe.Sizeof(m))
+	if r, _, _ := kernel32.NewProc("GlobalMemoryStatusEx").Call(uintptr(unsafe.Pointer(&m))); r != 0 {
+		s += fmt.Sprintf(", RAM %d MB (volné %d MB)", m.totalPhys>>20, m.availPhys>>20)
+	}
+	return s
 }

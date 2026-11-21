@@ -13,3 +13,4 @@ func OpenBrowser(url string) error { return exec.Command("xdg-open", url).Start(
 func ShowError(text string)    { println(text) }
 func ShowInfo(text string)     { println(text) }
 func Confirm(text string) bool { return true }
+func Version() string          { return "?" }

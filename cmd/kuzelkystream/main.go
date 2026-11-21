@@ -14,6 +14,8 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"runtime"
+	"runtime/debug"
 	"strconv"
 	"strings"
 	"syscall"
@@ -105,6 +107,8 @@ func main() {
 
 	url := fmt.Sprintf("http://127.0.0.1:%d/", port)
 	logger.Printf("KuzelkyStream %s běží: %s", version, url)
+	logger.Printf("systém: Windows %s, %d jader, %s", win.Version(), runtime.NumCPU(), runtime.Version())
+	go heartbeat(logger) // the last line before a hard crash shows when and how big the app was
 	go func() {
 		if err := web.Serve(ln, port, a); err != nil {
 			logger.Printf("webový server: %v", err)
@@ -173,19 +177,52 @@ func setupLog(dir string) (*log.Logger, *app.LogBuf, func()) {
 		writers = append(writers, os.Stdout)
 	}
 	closeFn := func() {}
-	if err := os.MkdirAll(filepath.Join(dir, "logs"), 0o755); err == nil {
-		pruneLogs(filepath.Join(dir, "logs"), 20)
-		if f, err := os.Create(filepath.Join(dir, "logs", time.Now().Format("2006-01-02_150405")+".log")); err == nil {
+	logDir := filepath.Join(dir, "logs")
+	if err := os.MkdirAll(logDir, 0o755); err == nil {
+		pruneLogs(logDir, "*.log", 20)
+		pruneLogs(logDir, "*_pad.txt", 20)
+		stamp := time.Now().Format("2006-01-02_150405")
+		var closeCrash func()
+		// A GUI build has no stderr, so a Go panic or fatal runtime error would vanish without a
+		// trace. Send it to a file next to the log; a clean exit deletes the (empty) file.
+		crashPath := filepath.Join(logDir, stamp+"_pad.txt")
+		if cf, err := os.Create(crashPath); err == nil {
+			_ = debug.SetCrashOutput(cf, debug.CrashOptions{})
+			cf.Close()
+			closeCrash = func() {
+				if st, err := os.Stat(crashPath); err == nil && st.Size() == 0 {
+					_ = os.Remove(crashPath)
+				}
+			}
+		}
+		if f, err := os.Create(filepath.Join(logDir, stamp+".log")); err == nil {
 			writers = append(writers, f)
-			closeFn = func() { f.Close() }
+			closeFn = func() {
+				f.Close()
+				if closeCrash != nil {
+					closeCrash()
+				}
+			}
+		} else if closeCrash != nil {
+			closeFn = closeCrash
 		}
 	}
 	return log.New(io.MultiWriter(writers...), "", log.Ltime), buf, closeFn
 }
 
-// pruneLogs keeps the newest `keep` .log files.
-func pruneLogs(dir string, keep int) {
-	files, _ := filepath.Glob(filepath.Join(dir, "*.log"))
+// heartbeat logs the app's memory every 30 s, so a crash without a message can at least be dated
+// and a memory leak spotted.
+func heartbeat(logger *log.Logger) {
+	var m runtime.MemStats
+	for range time.Tick(30 * time.Second) {
+		runtime.ReadMemStats(&m)
+		logger.Printf("běží: paměť %d MB, vláken %d", m.Sys>>20, runtime.NumGoroutine())
+	}
+}
+
+// pruneLogs keeps the newest `keep` files matching pattern.
+func pruneLogs(dir, pattern string, keep int) {
+	files, _ := filepath.Glob(filepath.Join(dir, pattern))
 	if len(files) <= keep {
 		return
 	}
