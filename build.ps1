@@ -13,10 +13,20 @@ obsahuje NVENC, Quick Sync i AMF).
 #>
 param(
     [string]$Version = (Get-Date -Format "yyyy.M.d"),
-    [string]$FFmpeg = $env:KUZELKY_FFMPEG
+    [string]$FFmpeg = $env:KUZELKY_FFMPEG,
+    # Google OAuth klient (typ Desktop app) vložený do exe, aby oddíl nemusel nic nastavovat v Google
+    # Cloud. Výchozí: z config.json vedle skriptu (sekce youtube). Do gitu se nedostane.
+    [string]$ClientId = $env:KUZELKY_CLIENT_ID,
+    [string]$ClientSecret = $env:KUZELKY_CLIENT_SECRET
 )
 $ErrorActionPreference = "Stop"
 Set-Location $PSScriptRoot
+
+if (-not $ClientId -and (Test-Path config.json)) {
+    $yt = (Get-Content config.json -Raw -Encoding utf8 | ConvertFrom-Json).youtube
+    $ClientId, $ClientSecret = $yt.clientId, $yt.clientSecret
+}
+if ($ClientId -and -not $ClientSecret) { throw "Zadán ClientId bez ClientSecret." }
 
 # Go: z PATH, nebo přenosná instalace v %USERPROFILE%\sdk.
 if (-not (Get-Command go -ErrorAction SilentlyContinue)) {
@@ -45,7 +55,14 @@ if (Test-Path $out) { Remove-Item $out -Recurse -Force }
 New-Item -ItemType Directory "$out\ffmpeg" -Force | Out-Null
 
 Write-Host "== sestavení verze $Version"
-go build -trimpath -ldflags "-H=windowsgui -s -w -X main.version=$Version" -o "$out\KuzelkyStream.exe" ./cmd/kuzelkystream
+$ld = "-H=windowsgui -s -w -X main.version=$Version"
+if ($ClientId) {
+    $ld += " -X main.oauthClientID=$ClientId -X main.oauthClientSecret=$ClientSecret"
+    Write-Host "   vestavěný Google OAuth klient: $($ClientId.Split('-')[0])-…"
+} else {
+    Write-Host "   BEZ vestavěného Google OAuth klienta (Client ID se pak zadává v Nastavení)"
+}
+go build -trimpath -ldflags $ld -o "$out\KuzelkyStream.exe" ./cmd/kuzelkystream
 if ($LASTEXITCODE) { throw "go build selhal" }
 
 Write-Host "== FFmpeg: $FFmpeg"

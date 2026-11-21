@@ -277,6 +277,7 @@ type settingsView struct {
 	PassSet   bool          `json:"hesloNastaveno"`
 	KeySet    bool          `json:"klicNastaven"`
 	SecretSet bool          `json:"secretNastaven"`
+	Builtin   bool          `json:"vestavenyKlient"`
 	Running   bool          `json:"bezi"`
 	FileLabel string        `json:"soubor"`
 }
@@ -284,7 +285,7 @@ type settingsView struct {
 func (s *Server) getSettings(w http.ResponseWriter, r *http.Request) {
 	c := s.app.Config()
 	v := settingsView{Cfg: c, PassSet: c.Camera.Password != "", KeySet: c.YouTube.Key != "",
-		SecretSet: c.YouTube.ClientSecret != "", Running: s.app.Running(), FileLabel: "config.json"}
+		SecretSet: c.YouTube.ClientSecret != "", Builtin: s.app.HasBuiltinClient(), Running: s.app.Running(), FileLabel: "config.json"}
 	v.Cfg.Camera.Password, v.Cfg.YouTube.Key, v.Cfg.YouTube.ClientSecret, v.Cfg.YouTube.RefreshToken = "", "", "", ""
 	v.Cfg.Cloud.RefreshToken = ""
 	writeJSON(w, v)

@@ -63,9 +63,9 @@ Přenos z kamery v kuželně na YouTube s grafikou skóre, které se zapisuje ru
 Nastavení (záložka NASTAVENÍ, změny se ukládají do config.json):
 - Kamera: IP adresa, uživatel, heslo → Otestovat kameru.
   RTSP musí být v kameře zapnuté. Zvuk: zapněte v kameře mikrofon.
-- YouTube: režim „Přes YouTube API“, Client ID a secret z Google Cloud → Uložit →
-  Přihlásit k YouTube účtem oddílu.
-  V Google Cloud musí být zapnuté YouTube Data API v3, Google Drive API a Google Sheets API.
-- Záloha a výsledky: zálohu na Google Disk a tabulku výsledků zapnete jedním přihlášením.
+- YouTube: režim „Přes YouTube API“ → Přihlásit k YouTube → vyberte účet/kanál oddílu.
+  Přístup k API (Google Cloud) je v aplikaci vestavěný, nic dalšího se nevyplňuje.
+  Google ukáže „aplikace není ověřená“ → Rozšířené → Přejít na Kuzelky Stream.
+- Záloha a výsledky: Přihlásit Google Disk (zvláštní přihlášení, může být i jiný účet než kanál).
 - Obraz a grafika: výřez z kamery, posun a velikost grafiky myší, předvolby pro různé kuželny.
 - Pravidla soutěže: výchozí 1. KLM (6 hráčů, 4 dráhy, 8 bodů).

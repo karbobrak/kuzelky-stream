@@ -27,8 +27,14 @@ import (
 	"kuzelkystream/internal/win"
 )
 
-// version is set at build time: -ldflags "-X main.version=1.0.0" (see build.ps1).
-var version = "vývojová"
+// Set at build time by build.ps1 (-ldflags -X): version and the Google OAuth client ("Desktop app")
+// that is built into the exe, so clubs only sign in. For a desktop app Google does not treat the
+// client secret as confidential; the user's own sign-in is what protects the account.
+var (
+	version           = "vývojová"
+	oauthClientID     string
+	oauthClientSecret string
+)
 
 // appDir is the folder with the exe; under `go run` (exe in a temp build dir) it is the working dir.
 func appDir() string {
@@ -83,6 +89,7 @@ func main() {
 	a := app.New(dir, *cfgPath, cfg, ffmpeg, logger, logBuf)
 	a.KeepAwake = win.KeepAwake
 	a.Version = version
+	a.UseBuiltinClient(oauthClientID, oauthClientSecret)
 	cloudCtx, stopCloud := context.WithCancel(context.Background())
 	go a.RunCloud(cloudCtx)
 

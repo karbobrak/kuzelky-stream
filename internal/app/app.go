@@ -29,6 +29,9 @@ type App struct {
 	// Version of the build (set by build.ps1 through -ldflags).
 	Version string
 
+	// OAuth client built into the exe (build.ps1); used when the settings have none.
+	builtinID, builtinSecret string
+
 	mu       sync.Mutex
 	cfg      config.Config
 	encoder  string // resolved encoder of the running engine
@@ -62,6 +65,31 @@ func New(dir, cfgPath string, cfg config.Config, ffmpeg string, logger *log.Logg
 	a.cl.wake = make(chan struct{}, 1)
 	a.initMatch()
 	return a
+}
+
+// UseBuiltinClient sets the Google OAuth client compiled into the exe. Settings without their own
+// Client ID get it, so a club only signs in and never visits Google Cloud.
+func (a *App) UseBuiltinClient(id, secret string) {
+	if id == "" || secret == "" {
+		return
+	}
+	a.mu.Lock()
+	a.builtinID, a.builtinSecret = id, secret
+	a.applyBuiltin(&a.cfg)
+	a.mu.Unlock()
+}
+
+// HasBuiltinClient reports whether the exe carries its own OAuth client.
+func (a *App) HasBuiltinClient() bool {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	return a.builtinID != ""
+}
+
+func (a *App) applyBuiltin(c *config.Config) {
+	if c.YouTube.ClientID == "" && a.builtinID != "" {
+		c.YouTube.ClientID, c.YouTube.ClientSecret = a.builtinID, a.builtinSecret
+	}
 }
 
 func (a *App) Config() config.Config {
@@ -255,6 +283,9 @@ func (a *App) CheckConfig(c config.Config) (Impact, error) {
 
 // ApplyConfig validates, saves config.json and applies the settings to a running stream.
 func (a *App) ApplyConfig(c config.Config) (Impact, error) {
+	a.mu.Lock()
+	a.applyBuiltin(&c)
+	a.mu.Unlock()
 	if err := c.Validate(); err != nil {
 		return ImpactNone, err
 	}

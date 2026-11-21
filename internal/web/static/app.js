@@ -260,7 +260,11 @@ function updateYtSettings() {
   $("btnYtLogin").textContent = signed ? "Přihlásit jiný kanál" : "Přihlásit k YouTube";
   $("btnYtLogout").hidden = !signed;
   // Open the Google Cloud section when it is not filled in yet.
-  if (!y.clientId || !loaded.secretNastaven) document.querySelector("#ytApi details").open = true;
+  const det = document.querySelector("#ytApi details");
+  det.querySelector("summary").textContent = loaded.vestavenyKlient
+    ? "Přístup k API (Google Cloud) – vestavěný v aplikaci, není třeba nic vyplňovat"
+    : "Přístup k API (Google Cloud) – vyplňuje se jednou";
+  if (!loaded.vestavenyKlient && (!y.clientId || !loaded.secretNastaven)) det.open = true;
 }
 $("ytMode").onchange = updateYtSettings;
 
