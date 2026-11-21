@@ -62,6 +62,9 @@ if ($ClientId) {
 } else {
     Write-Host "   BEZ vestavěného Google OAuth klienta (Client ID se pak zadává v Nastavení)"
 }
+# Application icon: a Windows resource (.syso) that go build links into the exe.
+go run ./cmd/mkicon -o cmd/kuzelkystream/rsrc_windows_amd64.syso -png docs/ikona.png
+if ($LASTEXITCODE) { throw "ikona se nepodařila vytvořit" }
 go build -trimpath -ldflags $ld -o "$out\KuzelkyStream.exe" ./cmd/kuzelkystream
 if ($LASTEXITCODE) { throw "go build selhal" }
 

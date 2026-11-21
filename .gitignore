@@ -6,3 +6,4 @@ data/
 ffmpeg/
 
 dist/
+*.syso
