@@ -55,6 +55,7 @@ type App struct {
 	mt   matchState
 	snap snapshotCache
 	cl   cloudState
+	imp  importState
 
 	camFPS atomic.Value // float64, measured once per second
 }
@@ -65,6 +66,7 @@ func New(dir, cfgPath string, cfg config.Config, ffmpeg string, logger *log.Logg
 	a.overlayOn.Store(cfg.Overlay.OnAtStart)
 	a.camFPS.Store(0.0)
 	a.cl.wake = make(chan struct{}, 1)
+	a.imp.wake = make(chan struct{}, 1)
 	a.initMatch()
 	return a
 }

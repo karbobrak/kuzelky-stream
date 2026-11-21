@@ -21,7 +21,12 @@ Přenos z kamery v kuželně na YouTube s grafikou skóre, které se zapisuje ru
 
 2. PRŮBĚH UTKÁNÍ
 ----------------
-1. Záložka UTKÁNÍ: vyplňte týmy a hráče (pořadí řádků = pořadí soubojů) → Založit utkání.
+1. Záložka UTKÁNÍ – nejjednodušší cesta: vložte odkaz na zápas z vysledky.kuzelky.cz
+   → „Založit utkání z odkazu“. Sestavy, střídání a výsledky (plné, dorážka, chyby) se pak
+   načítají samy každou minutu z oficiálního zápisu, který domácí oddíl během utkání vyplňuje.
+   Rozehraný úsek se ukazuje jako průběžný stav, setové body se počítají po jeho dohrání.
+   Při zapnutém načítání má přednost web – ruční zápis přepíše další načtení.
+   Bez odkazu: vyplňte týmy a hráče (pořadí řádků = pořadí soubojů) → Založit utkání.
    Známé týmy se nabízejí a jejich hráči se doplní sami.
    Utkání zakládejte PŘED spuštěním vysílání, aby se podle něj pojmenoval přenos na YouTube.
 2. Záložka VYSÍLÁNÍ: Spustit vysílání.

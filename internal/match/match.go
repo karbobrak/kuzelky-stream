@@ -216,7 +216,11 @@ type Match struct {
 	Message     string `json:"zprava"`
 	// Interrupted: the match is stopped (technical failure, SŘ čl. 16); the graphics show the full
 	// result table with a notice. PrevMode/PrevMessage restore the graphics when play resumes.
-	Interrupted bool   `json:"preruseno,omitempty"`
+	Interrupted bool `json:"preruseno,omitempty"`
+	// ResultsURL: the match on vysledky.kuzelky.cz; with AutoImport the app reads the line-up and
+	// results from there (the web wins over manual entries).
+	ResultsURL  string `json:"odkazVysledky,omitempty"`
+	AutoImport  bool   `json:"nacitatVysledky,omitempty"`
 	PrevMode    string `json:"predchoziStav,omitempty"`
 	PrevMessage string `json:"predchoziZprava,omitempty"`
 }

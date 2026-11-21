@@ -9,7 +9,7 @@ const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<
 
 window.loadMatch = async function (tab) {
   try { view = await api("GET", "/api/zapas"); } catch (e) { return; }
-  if (tab === "utkani") { renderForm(); loadSaved(); loadRosters(); }
+  if (tab === "utkani") { renderForm(); loadSaved(); loadRosters(); renderCka(); }
   else { renderScoring(); loadRosters(); } // rosters feed the substitution dialog
 };
 
@@ -51,7 +51,74 @@ function renderScoring() {
 
   renderDuels();
   refreshGfxPreview();
+  renderCkaBadge();
 }
+
+// ---- results from vysledky.kuzelky.cz
+function ckaStatusText(n) {
+  if (!n) return "";
+  if (n.chyba) return "✗ " + n.chyba;
+  return (n.stav ? `zápas ${n.stav}` : "") + (n.posledni ? ` · načteno ${n.posledni}` : "");
+}
+function renderCkaBadge() {
+  const m = view && view.zapas, el = $("zCka");
+  el.hidden = !(m && m.odkazVysledky);
+  if (el.hidden) return;
+  const n = view.nacitani || {};
+  el.textContent = "ČKA: " + (m.nacitatVysledky ? ckaStatusText(n) || "čekám na první načtení" : "načítání vypnuto");
+  el.className = "small " + (n.chyba ? "bad-text" : m.nacitatVysledky ? "ok-text" : "muted");
+}
+function renderCka() {
+  const m = view && view.zapas;
+  const linked = !!(m && m.odkazVysledky);
+  if (document.activeElement !== $("ckaUrl")) $("ckaUrl").value = linked ? m.odkazVysledky : "";
+  $("btnCkaLink").hidden = !m || linked;
+  $("ckaLinked").hidden = !linked;
+  if (!linked) return;
+  $("ckaAuto").checked = !!m.nacitatVysledky;
+  $("ckaAutoLabel").textContent = `Načítat výsledky automaticky (každých ${(view.nacitani || {}).interval || 60} s)`;
+  $("ckaStatus").textContent = ckaStatusText(view.nacitani);
+  $("ckaStatus").className = "small " + ((view.nacitani || {}).chyba ? "bad-text" : "ok-text");
+}
+async function ckaCall(url, body, okText) {
+  const msg = $("ckaMsg");
+  msg.textContent = "Načítám…"; msg.className = "small muted";
+  try {
+    view = await api("POST", url, body);
+    renderForm(); loadSaved(); loadRosters(); renderCka();
+    msg.textContent = okText; msg.className = "small ok-text";
+  } catch (e) { msg.textContent = e.message; msg.className = "small bad-text"; }
+}
+$("btnCkaNew").onclick = () => {
+  if (view && view.zapas && !confirm("Založit nové utkání z odkazu? Otevřené utkání zůstane uložené v seznamu.")) return;
+  ckaCall("/api/zapas/z-odkazu", { odkaz: $("ckaUrl").value }, "Utkání založeno z výsledkového servisu ✓");
+};
+$("btnCkaLink").onclick = () => ckaCall("/api/zapas/zdroj", { odkaz: $("ckaUrl").value, automaticky: true },
+  "Propojeno – výsledky se načítají ✓");
+$("ckaAuto").onchange = (e) => ckaCall("/api/zapas/zdroj", { odkaz: view.zapas.odkazVysledky, automaticky: e.target.checked },
+  e.target.checked ? "Automatické načítání zapnuto ✓" : "Automatické načítání vypnuto");
+$("btnCkaNow").onclick = () => ckaCall("/api/zapas/nacist", {}, "Načteno ✓");
+$("btnCkaUnlink").onclick = () => {
+  if (confirm("Zrušit propojení s výsledkovým servisem? Výsledky zůstanou, dál se zapisují ručně."))
+    ckaCall("/api/zapas/zdroj", { odkaz: "", automaticky: false }, "Propojení zrušeno");
+};
+
+// A match read from the web changes by itself: refresh the scoring page (never while typing).
+let lastViewJSON = "";
+setInterval(async () => {
+  const onScoring = $("tab-zapis").classList.contains("active"), onSetup = $("tab-utkani").classList.contains("active");
+  if (!view || !view.zapas || !view.zapas.nacitatVysledky || !(onScoring || onSetup)) return;
+  const a = document.activeElement;
+  if (a && (a.tagName === "INPUT" || a.tagName === "SELECT") && !a.closest("#ckaCard")) return;
+  if ($("plDlg").open) return;
+  let v;
+  try { v = await api("GET", "/api/zapas"); } catch (_) { return; }
+  const j = JSON.stringify(v);
+  if (j === lastViewJSON) return;
+  lastViewJSON = j;
+  view = v;
+  if (onScoring) renderScoring(); else renderCka();
+}, 5000);
 
 function partDuels(p) {
   const n = view.pravidla.soubojuNaCast, out = [];

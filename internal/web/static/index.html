@@ -119,6 +119,7 @@
         <button id="btnUndo" title="Ctrl+Z">↶ Zpět</button>
         <button id="btnInterrupt2" class="interrupt">⏸ Přerušit utkání</button>
         <span id="zCloud" class="small muted"></span>
+        <span id="zCka" class="small muted" hidden></span>
         <label class="switch" title="Klávesová zkratka: G (mimo políčka)">
           <input type="checkbox" id="chkOverlay2">
           <span class="slider"></span>
@@ -177,6 +178,26 @@
   </section>
 
   <section id="tab-utkani" class="tab">
+    <div class="card" id="ckaCard">
+      <h2>Výsledky z výsledkového servisu ČKA</h2>
+      <p class="muted small">Domácí oddíl musí výsledky během utkání průběžně zapisovat do
+        <a href="https://vysledky.kuzelky.cz" target="_blank" rel="noopener">vysledky.kuzelky.cz</a>. Vložte odkaz na zápas
+        a aplikace odtud převezme sestavy, střídání a výsledky (plné, dorážka, chyby) a bude je pravidelně načítat –
+        nic se nemusí zapisovat dvakrát. Rozehraný úsek se ukazuje jako průběžný stav.</p>
+      <div class="row actions">
+        <label>Odkaz na zápas <input id="ckaUrl" placeholder="https://vysledky.kuzelky.cz/detail-zapasu/…"></label>
+        <button type="button" id="btnCkaNew" class="primary">Založit utkání z odkazu</button>
+        <button type="button" id="btnCkaLink" hidden>Propojit s otevřeným utkáním</button>
+      </div>
+      <div id="ckaLinked" class="row actions" hidden>
+        <label class="check"><input type="checkbox" id="ckaAuto"> <span id="ckaAutoLabel">Načítat výsledky automaticky</span></label>
+        <button type="button" id="btnCkaNow">Načíst teď</button>
+        <button type="button" id="btnCkaUnlink">Zrušit propojení</button>
+        <span id="ckaStatus" class="small"></span>
+      </div>
+      <p id="ckaMsg" class="small"></p>
+    </div>
+
     <form id="matchForm" class="card" autocomplete="off">
       <h2 id="mfTitle">Nové utkání</h2>
       <div class="row">
@@ -474,6 +495,7 @@
           <label class="narrow">Úseků (drah) na hráče <input name="pravidla.drah" type="number" min="1" max="8"></label>
           <label class="narrow">Soubojů najednou (v části) <input name="pravidla.soubojuNaCast" type="number" min="1" max="12"></label>
           <label class="narrow">Max. kuželek na dráhu <input name="pravidla.maxKuzelekNaDrahu" type="number" min="1"></label>
+          <label class="narrow">Načítat výsledky ČKA každých (s) <input name="aplikace.intervalNacitaniVysledkuS" type="number" min="30" max="900"></label>
           <label class="narrow">Hodů na úsek <input name="pravidla.hoduNaUsek" type="number" min="1" max="200"></label>
           <label class="narrow">Střídání na družstvo <input name="pravidla.stridaniNaTym" type="number" min="0" max="12"></label>
         </div>

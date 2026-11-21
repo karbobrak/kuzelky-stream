@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"kuzelkystream/internal/app"
+	"kuzelkystream/internal/cka"
 	"kuzelkystream/internal/config"
 	"kuzelkystream/internal/stream"
 	"kuzelkystream/internal/tray"
@@ -94,6 +95,8 @@ func main() {
 	a.UseBuiltinClient(oauthClientID, oauthClientSecret)
 	cloudCtx, stopCloud := context.WithCancel(context.Background())
 	go a.RunCloud(cloudCtx)
+	cka.UserAgent = fmt.Sprintf("KuzelkyStream/%s (+https://github.com/karbobrak/kuzelky-stream)", version)
+	go a.RunImport(cloudCtx)
 
 	ln, port, err := web.Listen(cfg.App.Port)
 	if err != nil {

@@ -124,6 +124,8 @@ type Picture struct {
 type App struct {
 	Port        int  `json:"port"`
 	OpenBrowser bool `json:"otevritProhlizec"`
+	// How often a match linked to vysledky.kuzelky.cz is read again (seconds).
+	ImportSeconds int `json:"intervalNacitaniVysledkuS"`
 }
 
 type Config struct {
@@ -183,7 +185,7 @@ func Default() Config {
 		Rules:   match.DefaultRules(),
 		Picture: Picture{CropW: 100, CropH: 100, Lock169: true, Fit: "orez"},
 		Cloud:   Cloud{Backup: true, Sheet: true},
-		App:     App{Port: 8080, OpenBrowser: true},
+		App:     App{Port: 8080, OpenBrowser: true, ImportSeconds: 60},
 	}
 }
 
@@ -313,6 +315,9 @@ func (c Config) Validate() error {
 	}
 	if err := c.Rules.Validate(); err != nil {
 		return fmt.Errorf("pravidla: %w", err)
+	}
+	if c.App.ImportSeconds != 0 && (c.App.ImportSeconds < 30 || c.App.ImportSeconds > 900) {
+		return fmt.Errorf("interval načítání výsledků musí být 30–900 s (%d)", c.App.ImportSeconds)
 	}
 	if c.App.Port <= 0 || c.App.Port > 65535 {
 		return fmt.Errorf("port aplikace musí být 1–65535 (%d)", c.App.Port)

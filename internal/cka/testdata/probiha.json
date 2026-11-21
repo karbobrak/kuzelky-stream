@@ -1,0 +1,652 @@
+{
+ "id": 545,
+ "slug": "2-klm-a-2026-2027-kolo-9-tj-radlice-muzi-skk-bohusovice-muzi",
+ "date": "2026-11-21",
+ "time": "17:00",
+ "round": 9,
+ "status": "IN_PROGRESS",
+ "matchType": "TEAMS_OF_6",
+ "discipline": "T120",
+ "videoUrl": null,
+ "homeTeam": {
+  "name": "TJ Radlice"
+ },
+ "awayTeam": {
+  "name": "SKK Bohušovice"
+ },
+ "competition": {
+  "id": 16,
+  "slug": "2-klm-a-2026-2027",
+  "name": "2. KLM A",
+  "priority": 20,
+  "category": "LEAGUE_COMPETITION",
+  "periodType": "LONG_TERM",
+  "playerType": "TEAMS_OF_6"
+ },
+ "results": [
+  {
+   "isHome": true,
+   "teamPoints": 2,
+   "totalPerformance": 3225,
+   "totalFull": 2178,
+   "totalSpare": 1047,
+   "totalErrors": 22,
+   "totalSetPoints": 10,
+   "playerResults": [
+    {
+     "position": 1,
+     "teamPoints": 0,
+     "setPoints": 1,
+     "totalFull": 362,
+     "totalSpare": 167,
+     "totalErrors": 5,
+     "totalPerformance": 529,
+     "player": {
+      "id": 1443,
+      "firstName": "Milan",
+      "lastName": "Komorník",
+      "ageAttribute": null,
+      "slug": "milan-komornik"
+     },
+     "laneResults": [
+      {
+       "laneNumber": 1,
+       "full": 95,
+       "spare": 44,
+       "errors": 0,
+       "total": 139,
+       "setPoints": 1
+      },
+      {
+       "laneNumber": 2,
+       "full": 87,
+       "spare": 44,
+       "errors": 1,
+       "total": 131,
+       "setPoints": 0
+      },
+      {
+       "laneNumber": 3,
+       "full": 95,
+       "spare": 27,
+       "errors": 3,
+       "total": 122,
+       "setPoints": 0
+      },
+      {
+       "laneNumber": 4,
+       "full": 85,
+       "spare": 52,
+       "errors": 1,
+       "total": 137,
+       "setPoints": 0
+      }
+     ]
+    },
+    {
+     "position": 2,
+     "teamPoints": 1,
+     "setPoints": 2.5,
+     "totalFull": 370,
+     "totalSpare": 207,
+     "totalErrors": 2,
+     "totalPerformance": 577,
+     "player": {
+      "id": 1672,
+      "firstName": "Rostislav",
+      "lastName": "Kašpar",
+      "ageAttribute": null,
+      "slug": "rostislav-kaspar"
+     },
+     "laneResults": [
+      {
+       "laneNumber": 1,
+       "full": 85,
+       "spare": 60,
+       "errors": 0,
+       "total": 145,
+       "setPoints": 1
+      },
+      {
+       "laneNumber": 2,
+       "full": 97,
+       "spare": 61,
+       "errors": 0,
+       "total": 158,
+       "setPoints": 1
+      },
+      {
+       "laneNumber": 3,
+       "full": 89,
+       "spare": 51,
+       "errors": 1,
+       "total": 140,
+       "setPoints": 0.5
+      },
+      {
+       "laneNumber": 4,
+       "full": 99,
+       "spare": 35,
+       "errors": 1,
+       "total": 134,
+       "setPoints": 0
+      }
+     ]
+    },
+    {
+     "position": 3,
+     "teamPoints": 1,
+     "setPoints": 3,
+     "totalFull": 369,
+     "totalSpare": 182,
+     "totalErrors": 5,
+     "totalPerformance": 551,
+     "player": {
+      "id": 3913,
+      "firstName": "Josef",
+      "lastName": "Kašpar",
+      "ageAttribute": null,
+      "slug": "josef-kaspar"
+     },
+     "laneResults": [
+      {
+       "laneNumber": 1,
+       "full": 99,
+       "spare": 53,
+       "errors": 2,
+       "total": 152,
+       "setPoints": 1
+      },
+      {
+       "laneNumber": 2,
+       "full": 81,
+       "spare": 44,
+       "errors": 1,
+       "total": 125,
+       "setPoints": 1
+      },
+      {
+       "laneNumber": 3,
+       "full": 90,
+       "spare": 35,
+       "errors": 1,
+       "total": 125,
+       "setPoints": 0
+      },
+      {
+       "laneNumber": 4,
+       "full": 99,
+       "spare": 50,
+       "errors": 1,
+       "total": 149,
+       "setPoints": 1
+      }
+     ]
+    },
+    {
+     "position": 4,
+     "teamPoints": 0,
+     "setPoints": 2,
+     "totalFull": 362,
+     "totalSpare": 175,
+     "totalErrors": 5,
+     "totalPerformance": 537,
+     "player": {
+      "id": 5244,
+      "firstName": "Petr",
+      "lastName": "Sedláček",
+      "ageAttribute": null,
+      "slug": "petr-sedlacek-2"
+     },
+     "laneResults": [
+      {
+       "laneNumber": 1,
+       "full": 86,
+       "spare": 61,
+       "errors": 0,
+       "total": 147,
+       "setPoints": 1
+      },
+      {
+       "laneNumber": 2,
+       "full": 97,
+       "spare": 27,
+       "errors": 3,
+       "total": 124,
+       "setPoints": 0
+      },
+      {
+       "laneNumber": 3,
+       "full": 92,
+       "spare": 60,
+       "errors": 0,
+       "total": 152,
+       "setPoints": 1
+      },
+      {
+       "laneNumber": 4,
+       "full": 87,
+       "spare": 27,
+       "errors": 2,
+       "total": 114,
+       "setPoints": 0
+      }
+     ]
+    },
+    {
+     "position": 5,
+     "teamPoints": 0,
+     "setPoints": 0,
+     "totalFull": 343,
+     "totalSpare": 164,
+     "totalErrors": 0,
+     "totalPerformance": 507,
+     "player": {
+      "id": 1679,
+      "firstName": "Miloš",
+      "lastName": "Beneš",
+      "ageAttribute": "ml.",
+      "slug": "milos-benes"
+     },
+     "laneResults": [
+      {
+       "laneNumber": 1,
+       "full": 83,
+       "spare": 57,
+       "errors": 0,
+       "total": 140,
+       "setPoints": 0
+      },
+      {
+       "laneNumber": 2,
+       "full": 79,
+       "spare": 54,
+       "errors": 0,
+       "total": 133,
+       "setPoints": 0
+      },
+      {
+       "laneNumber": 3,
+       "full": 94,
+       "spare": 44,
+       "errors": 0,
+       "total": 138,
+       "setPoints": 0
+      },
+      {
+       "laneNumber": 4,
+       "full": 87,
+       "spare": 9,
+       "errors": 0,
+       "total": 96,
+       "setPoints": 0
+      }
+     ]
+    },
+    {
+     "position": 6,
+     "teamPoints": 0,
+     "setPoints": 1.5,
+     "totalFull": 372,
+     "totalSpare": 152,
+     "totalErrors": 5,
+     "totalPerformance": 524,
+     "player": {
+      "id": 3461,
+      "firstName": "Jindřich",
+      "lastName": "Valo",
+      "ageAttribute": null,
+      "slug": "jindrich-valo"
+     },
+     "laneResults": [
+      {
+       "laneNumber": 1,
+       "full": 92,
+       "spare": 24,
+       "errors": 4,
+       "total": 116,
+       "setPoints": 0
+      },
+      {
+       "laneNumber": 2,
+       "full": 89,
+       "spare": 44,
+       "errors": 1,
+       "total": 133,
+       "setPoints": 0
+      },
+      {
+       "laneNumber": 3,
+       "full": 107,
+       "spare": 60,
+       "errors": 0,
+       "total": 167,
+       "setPoints": 1
+      },
+      {
+       "laneNumber": 4,
+       "full": 84,
+       "spare": 24,
+       "errors": 0,
+       "total": 108,
+       "setPoints": 0.5
+      }
+     ]
+    }
+   ],
+   "substitutions": []
+  },
+  {
+   "isHome": false,
+   "teamPoints": 6,
+   "totalPerformance": 3235,
+   "totalFull": 2210,
+   "totalSpare": 1025,
+   "totalErrors": 26,
+   "totalSetPoints": 14,
+   "playerResults": [
+    {
+     "position": 1,
+     "teamPoints": 1,
+     "setPoints": 3,
+     "totalFull": 380,
+     "totalSpare": 180,
+     "totalErrors": 4,
+     "totalPerformance": 560,
+     "player": {
+      "id": 708,
+      "firstName": "Roman",
+      "lastName": "Filip",
+      "ageAttribute": null,
+      "slug": "roman-filip"
+     },
+     "laneResults": [
+      {
+       "laneNumber": 1,
+       "full": 88,
+       "spare": 42,
+       "errors": 2,
+       "total": 130,
+       "setPoints": 0
+      },
+      {
+       "laneNumber": 2,
+       "full": 95,
+       "spare": 41,
+       "errors": 2,
+       "total": 136,
+       "setPoints": 1
+      },
+      {
+       "laneNumber": 3,
+       "full": 103,
+       "spare": 36,
+       "errors": 0,
+       "total": 139,
+       "setPoints": 1
+      },
+      {
+       "laneNumber": 4,
+       "full": 94,
+       "spare": 61,
+       "errors": 0,
+       "total": 155,
+       "setPoints": 1
+      }
+     ]
+    },
+    {
+     "position": 2,
+     "teamPoints": 0,
+     "setPoints": 1.5,
+     "totalFull": 367,
+     "totalSpare": 194,
+     "totalErrors": 2,
+     "totalPerformance": 561,
+     "player": {
+      "id": 1968,
+      "firstName": "Jaromír",
+      "lastName": "Hnát",
+      "ageAttribute": null,
+      "slug": "jaromir-hnat"
+     },
+     "laneResults": [
+      {
+       "laneNumber": 1,
+       "full": 90,
+       "spare": 36,
+       "errors": 1,
+       "total": 126,
+       "setPoints": 0
+      },
+      {
+       "laneNumber": 2,
+       "full": 93,
+       "spare": 54,
+       "errors": 0,
+       "total": 147,
+       "setPoints": 0
+      },
+      {
+       "laneNumber": 3,
+       "full": 88,
+       "spare": 52,
+       "errors": 1,
+       "total": 140,
+       "setPoints": 0.5
+      },
+      {
+       "laneNumber": 4,
+       "full": 96,
+       "spare": 52,
+       "errors": 0,
+       "total": 148,
+       "setPoints": 1
+      }
+     ]
+    },
+    {
+     "position": 3,
+     "teamPoints": 0,
+     "setPoints": 1,
+     "totalFull": 343,
+     "totalSpare": 153,
+     "totalErrors": 9,
+     "totalPerformance": 496,
+     "player": {
+      "id": 4034,
+      "firstName": "Ondřej",
+      "lastName": "Perníček",
+      "ageAttribute": null,
+      "slug": "ondrej-pernicek"
+     },
+     "laneResults": [
+      {
+       "laneNumber": 1,
+       "full": 89,
+       "spare": 35,
+       "errors": 3,
+       "total": 124,
+       "setPoints": 0
+      },
+      {
+       "laneNumber": 2,
+       "full": 85,
+       "spare": 34,
+       "errors": 3,
+       "total": 119,
+       "setPoints": 0
+      },
+      {
+       "laneNumber": 3,
+       "full": 90,
+       "spare": 43,
+       "errors": 1,
+       "total": 133,
+       "setPoints": 1
+      },
+      {
+       "laneNumber": 4,
+       "full": 79,
+       "spare": 41,
+       "errors": 2,
+       "total": 120,
+       "setPoints": 0
+      }
+     ]
+    },
+    {
+     "position": 4,
+     "teamPoints": 1,
+     "setPoints": 2,
+     "totalFull": 374,
+     "totalSpare": 175,
+     "totalErrors": 3,
+     "totalPerformance": 549,
+     "player": {
+      "id": 710,
+      "firstName": "Milan",
+      "lastName": "Perníček",
+      "ageAttribute": null,
+      "slug": "milan-pernicek"
+     },
+     "laneResults": [
+      {
+       "laneNumber": 1,
+       "full": 102,
+       "spare": 35,
+       "errors": 1,
+       "total": 137,
+       "setPoints": 0
+      },
+      {
+       "laneNumber": 2,
+       "full": 99,
+       "spare": 54,
+       "errors": 0,
+       "total": 153,
+       "setPoints": 1
+      },
+      {
+       "laneNumber": 3,
+       "full": 88,
+       "spare": 51,
+       "errors": 0,
+       "total": 139,
+       "setPoints": 0
+      },
+      {
+       "laneNumber": 4,
+       "full": 85,
+       "spare": 35,
+       "errors": 2,
+       "total": 120,
+       "setPoints": 1
+      }
+     ]
+    },
+    {
+     "position": 5,
+     "teamPoints": 1,
+     "setPoints": 4,
+     "totalFull": 376,
+     "totalSpare": 170,
+     "totalErrors": 2,
+     "totalPerformance": 546,
+     "player": {
+      "id": 711,
+      "firstName": "Jiří",
+      "lastName": "Semerád",
+      "ageAttribute": null,
+      "slug": "jiri-semerad"
+     },
+     "laneResults": [
+      {
+       "laneNumber": 1,
+       "full": 96,
+       "spare": 45,
+       "errors": 1,
+       "total": 141,
+       "setPoints": 1
+      },
+      {
+       "laneNumber": 2,
+       "full": 98,
+       "spare": 54,
+       "errors": 0,
+       "total": 152,
+       "setPoints": 1
+      },
+      {
+       "laneNumber": 3,
+       "full": 84,
+       "spare": 63,
+       "errors": 1,
+       "total": 147,
+       "setPoints": 1
+      },
+      {
+       "laneNumber": 4,
+       "full": 98,
+       "spare": 8,
+       "errors": 0,
+       "total": 106,
+       "setPoints": 1
+      }
+     ]
+    },
+    {
+     "position": 6,
+     "teamPoints": 1,
+     "setPoints": 2.5,
+     "totalFull": 370,
+     "totalSpare": 153,
+     "totalErrors": 6,
+     "totalPerformance": 523,
+     "player": {
+      "id": 1881,
+      "firstName": "Lukáš",
+      "lastName": "Dařílek",
+      "ageAttribute": null,
+      "slug": "lukas-darilek"
+     },
+     "laneResults": [
+      {
+       "laneNumber": 1,
+       "full": 90,
+       "spare": 44,
+       "errors": 3,
+       "total": 134,
+       "setPoints": 1
+      },
+      {
+       "laneNumber": 2,
+       "full": 96,
+       "spare": 52,
+       "errors": 2,
+       "total": 148,
+       "setPoints": 1
+      },
+      {
+       "laneNumber": 3,
+       "full": 88,
+       "spare": 45,
+       "errors": 1,
+       "total": 133,
+       "setPoints": 0
+      },
+      {
+       "laneNumber": 4,
+       "full": 96,
+       "spare": 12,
+       "errors": 0,
+       "total": 108,
+       "setPoints": 0.5
+      }
+     ]
+    }
+   ],
+   "substitutions": []
+  }
+ ]
+}

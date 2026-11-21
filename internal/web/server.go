@@ -142,6 +142,30 @@ func Serve(ln net.Listener, port int, a *app.App) error {
 		}
 		matchReply(w, a.SetMode(b.Mode, b.Message))
 	})
+	mux.HandleFunc("POST /api/zapas/z-odkazu", func(w http.ResponseWriter, r *http.Request) {
+		var b struct {
+			URL string `json:"odkaz"`
+		}
+		if err := decode(r, &b); err != nil {
+			reply(w, nil, err)
+			return
+		}
+		matchReply(w, a.NewMatchFromURL(r.Context(), b.URL))
+	})
+	mux.HandleFunc("POST /api/zapas/zdroj", func(w http.ResponseWriter, r *http.Request) {
+		var b struct {
+			URL  string `json:"odkaz"`
+			Auto bool   `json:"automaticky"`
+		}
+		if err := decode(r, &b); err != nil {
+			reply(w, nil, err)
+			return
+		}
+		matchReply(w, a.SetResultsSource(b.URL, b.Auto))
+	})
+	mux.HandleFunc("POST /api/zapas/nacist", func(w http.ResponseWriter, r *http.Request) {
+		matchReply(w, a.ImportNow(r.Context()))
+	})
 	mux.HandleFunc("POST /api/zapas/hrac", func(w http.ResponseWriter, r *http.Request) {
 		var pc app.PlayerChange
 		if err := decode(r, &pc); err != nil {

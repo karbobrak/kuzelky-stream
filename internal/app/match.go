@@ -37,6 +37,7 @@ func (a *App) initMatch() {
 
 // MatchView is the match with its computed result, for the UI.
 type MatchView struct {
+	Import  ImportStatus  `json:"nacitani"`
 	Match   *match.Match  `json:"zapas"`
 	Result  *match.Result `json:"vysledek,omitempty"`
 	File    string        `json:"soubor,omitempty"`
@@ -47,9 +48,10 @@ type MatchView struct {
 
 func (a *App) MatchView() MatchView {
 	rules := a.Config().Rules
+	imp := a.importStatus() // before locking the match (it reads the config)
 	a.mt.mu.Lock()
 	defer a.mt.mu.Unlock()
-	v := MatchView{Rules: rules, Parts: rules.Parts(), File: a.mt.file, CanUndo: len(a.mt.history) > 0}
+	v := MatchView{Rules: rules, Parts: rules.Parts(), File: a.mt.file, CanUndo: len(a.mt.history) > 0, Import: imp}
 	if a.mt.cur != nil {
 		m := *a.mt.cur
 		r := match.Compute(m, rules)

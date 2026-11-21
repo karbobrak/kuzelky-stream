@@ -448,3 +448,10 @@ oblasti místo okna konzole, napojení na automaty (snímání čítačů), expo
   podrobný zápis plné/dorážka/chyby (`podrobnyZapis`), součet setů družstev, přerušení utkání (čl. 16;
   tlačítko na Vysílání: tabulka s „Utkání přerušeno“, grafika se vynutí zapnutá, pokračování vrátí
   předchozí stav grafiky i přepínače). Rotace drah podle STP čl. 20.
+- **Načítání výsledků z vysledky.kuzelky.cz** (balíček `internal/cka`): stránka zápasu (Next.js) nese
+  zápas jako JSON ve „flight“ payloadu (`self.__next_f.push`); čte se odtud, ne z HTML tabulky.
+  API ČKA (`kuzelky.cz/api/v1/public`) vyžaduje přihlášení a nepoužívá se. Interval `aplikace.
+  intervalNacitaniVysledkuS` (výchozí 60 s, 30–900). Web nemá příznak „úsek dohrán“: poslední úsek
+  s daty je průběžný, dokud hráči nezačnou další úsek, nezačne další část nebo není zápas FINISHED.
+  Aktuální část se přepíná podle hry (ruční volba platí, dokud se hra neposune). Načtení beze změny
+  se neukládá (žádná historie ani upload). Ověřeno 2026-11-21 na živém zápase 2. KLM A.
