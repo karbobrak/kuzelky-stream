@@ -1,0 +1,8 @@
+config.json
+config.json.tmp
+logs/
+data/
+*.exe
+ffmpeg/
+
+dist/

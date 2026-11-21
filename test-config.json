@@ -1,0 +1,38 @@
+{
+  "kamera": {
+    "testovaciZdroj": true,
+    "host": "192.168.100.163",
+    "port": 554,
+    "uzivatel": "admin",
+    "heslo": "",
+    "cesta": "h264Preview_01_main",
+    "transport": "tcp",
+    "url": ""
+  },
+  "youtube": {
+    "server": "rtmp://a.rtmp.youtube.com/live2",
+    "klic": ""
+  },
+  "vystup": {
+    "cil": "soubor",
+    "souborCesta": "data/zaznamy/test.mkv",
+    "sirka": 1280,
+    "vyska": 720,
+    "fps": 25,
+    "datovyTokVideaKbps": 3000,
+    "koder": "auto",
+    "presetX264": "veryfast",
+    "hwDekodovani": false
+  },
+  "zvuk": {
+    "zdroj": "kamera",
+    "datovyTokKbps": 128
+  },
+  "grafika": {
+    "grafikaPriStartu": true
+  },
+  "aplikace": {
+    "port": 8080,
+    "otevritProhlizec": true
+  }
+}

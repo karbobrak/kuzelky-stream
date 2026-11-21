@@ -1,0 +1,71 @@
+KUŽELKY STREAM – NÁVOD
+======================
+
+Přenos z kamery v kuželně na YouTube s grafikou skóre, které se zapisuje ručně.
+
+
+1. SPUŠTĚNÍ
+-----------
+- Složku KuzelkyStream rozbalte kamkoli (plocha, Dokumenty, flash disk). Nic se neinstaluje.
+- Spusťte KuzelkyStream.exe.
+  - Při prvním spuštění může Windows ukázat „Systém Windows ochránil váš počítač“.
+    Klikněte na „Další informace“ → „Přesto spustit“.
+- Vedle hodin se objeví ikona kuželky a v prohlížeči se otevře ovládání.
+    šedá kuželka     = nevysílá se
+    červená kuželka  = vysílá se
+    oranžová kuželka = obnovuje se spojení / kamera je nedostupná
+- Levé kliknutí na ikonu otevře ovládání. Pravé kliknutí → Ukončit.
+- Notebook musí být ve stejné síti jako kamera a mít internet.
+  Během vysílání neusne sám.
+
+
+2. PRŮBĚH UTKÁNÍ
+----------------
+1. Záložka UTKÁNÍ: vyplňte týmy a hráče (pořadí řádků = pořadí soubojů) → Založit utkání.
+   Známé týmy se nabízejí a jejich hráči se doplní sami.
+   Utkání zakládejte PŘED spuštěním vysílání, aby se podle něj pojmenoval přenos na YouTube.
+2. Záložka VYSÍLÁNÍ: Spustit vysílání.
+   V kartě „Přenos na YouTube“ je odkaz pro diváky (tlačítko Kopírovat odkaz).
+   Do minuty by měl být stav „● ŽIVĚ“.
+3. Záložka ZÁPIS:
+   - Vyberte část (1, 2, 3).
+   - Po každé dráze zapište součty hráčů. Enter skočí na další políčko.
+   - Sloupec „Průběžně“ je nepovinný stav rozehrané dráhy.
+   - Body se počítají samy.
+   - Překlep: tlačítko Zpět nebo Ctrl+Z.
+   - Grafika: lišta se skóre / lišta + zpráva (např. Přestávka) / tabulka všech soubojů.
+   - Přepínač Grafika (nebo klávesa G) grafiku úplně skryje.
+4. Po utkání: Vysílání → „Ukončit přenos utkání“. Video na YouTube se uzavře jako záznam.
+   Pouhé „Zastavit vysílání“ přenos neukončí. Po novém spuštění pokračuje na stejné adrese.
+
+
+3. KDYŽ NĚCO NEJDE
+------------------
+- Kamera vypadne: divák vidí „Přenos z kamery bude za chvíli obnoven“ i se skóre. Aplikace se
+  ke kameře připojí sama. Ručně: Vysílání → Znovu připojit kameru.
+- YouTube nevysílá nebo se zasekl: Vysílání → Restartovat vysílání.
+- „Přihlášení ke Google účtu vypršelo“: Nastavení → YouTube → Přihlásit k YouTube.
+- Nic z toho nepomáhá: ukončete aplikaci (pravé tlačítko na ikoně → Ukončit) a spusťte ji znovu.
+  Utkání ani skóre se neztratí, vše se průběžně ukládá.
+- Pro správce: záznam o běhu je ve složce logs (vždy 20 posledních spuštění).
+
+
+4. JINÝ NOTEBOOK
+----------------
+- Zkopírujte CELOU složku KuzelkyStream, včetně config.json.
+- Utkání a soupisky se stáhnou z Google Disku samy (je-li zapnutá záloha).
+- POZOR: config.json obsahuje heslo ke kameře a přihlášení k YouTube a Google Disku oddílu.
+  Složku nikomu neposílejte a nedávejte ji veřejně.
+
+
+5. PRO SPRÁVCE – PRVNÍ NASTAVENÍ
+--------------------------------
+Nastavení (záložka NASTAVENÍ, změny se ukládají do config.json):
+- Kamera: IP adresa, uživatel, heslo → Otestovat kameru.
+  RTSP musí být v kameře zapnuté. Zvuk: zapněte v kameře mikrofon.
+- YouTube: režim „Přes YouTube API“, Client ID a secret z Google Cloud → Uložit →
+  Přihlásit k YouTube účtem oddílu.
+  V Google Cloud musí být zapnuté YouTube Data API v3, Google Drive API a Google Sheets API.
+- Záloha a výsledky: zálohu na Google Disk a tabulku výsledků zapnete jedním přihlášením.
+- Obraz a grafika: výřez z kamery, posun a velikost grafiky myší, předvolby pro různé kuželny.
+- Pravidla soutěže: výchozí 1. KLM (6 hráčů, 4 dráhy, 8 bodů).

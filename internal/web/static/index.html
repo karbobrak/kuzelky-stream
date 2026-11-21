@@ -1,0 +1,450 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kuželky Stream</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand">Kuželky Stream <span id="ver" class="small muted"></span></div>
+  <nav class="tabs" role="tablist">
+    <button role="tab" data-tab="vysilani" class="active">Vysílání</button>
+    <button role="tab" data-tab="zapis">Zápis</button>
+    <button role="tab" data-tab="utkani">Utkání</button>
+    <button role="tab" data-tab="obraz">Obraz a grafika</button>
+    <button role="tab" data-tab="nastaveni">Nastavení</button>
+  </nav>
+  <div id="pill" class="pill off">Zastaveno</div>
+</header>
+
+<main>
+  <!-- ============================================================ VYSÍLÁNÍ -->
+  <section id="tab-vysilani" class="tab active">
+    <div class="controls">
+      <button id="btnStart" class="big primary">▶ Spustit vysílání</button>
+      <button id="btnStop" class="big danger" hidden>■ Zastavit vysílání</button>
+      <div class="ctl-group">
+        <button id="btnRestartCam" title="Znovu se připojí ke kameře. YouTube se nepřeruší, divák chvíli vidí náhradní obraz.">↻ Znovu připojit kameru</button>
+        <button id="btnRestartOut" title="Ukončí a znovu naváže spojení s YouTube. Krátký výpadek.">↻ Restartovat vysílání</button>
+      </div>
+      <label class="switch" title="Klávesová zkratka: G">
+        <input type="checkbox" id="chkOverlay">
+        <span class="slider"></span>
+        <span class="switch-label">Grafika <kbd>G</kbd></span>
+      </label>
+    </div>
+    <div id="msg" class="msg" hidden></div>
+
+    <div class="grid">
+      <div class="card preview-card">
+        <h2>Náhled vysílaného obrazu <span class="muted small">(1× za sekundu)</span></h2>
+        <div class="preview">
+          <img id="preview" alt="" hidden>
+          <div id="previewEmpty" class="preview-empty">Vysílání neběží</div>
+          <div id="slateBadge" class="slate-badge" hidden>Divák vidí náhradní obraz – kamera je nedostupná</div>
+        </div>
+      </div>
+      <div class="stack">
+        <div class="card">
+          <h2>Kamera</h2>
+          <dl class="kv">
+            <dt>Stav</dt><dd id="camState">–</dd>
+            <dt>Snímků/s</dt><dd id="camFps">–</dd>
+            <dt>Restartů</dt><dd id="camRestarts">–</dd>
+          </dl>
+          <p id="camErr" class="err small" hidden></p>
+        </div>
+        <div class="card">
+          <h2 id="outTitle">YouTube</h2>
+          <dl class="kv">
+            <dt>Stav</dt><dd id="outState">–</dd>
+            <dt>Snímků/s</dt><dd id="outFps">–</dd>
+            <dt>Datový tok</dt><dd id="outBitrate">–</dd>
+            <dt>Rychlost</dt><dd id="outSpeed">–</dd>
+            <dt>Restartů</dt><dd id="outRestarts">–</dd>
+            <dt>Zahozeno snímků</dt><dd id="outDropped">–</dd>
+            <dt>Kodér</dt><dd id="outEncoder">–</dd>
+            <dt>Běží od</dt><dd id="outSince">–</dd>
+          </dl>
+          <p id="outErr" class="err small" hidden></p>
+        </div>
+        <div class="card" id="ytCard" hidden>
+          <h2>Přenos na YouTube</h2>
+          <p id="ytTitle" class="yt-title"></p>
+          <div class="row actions">
+            <a id="ytLink" target="_blank" rel="noopener"></a>
+            <button type="button" id="btnCopyLink" class="small-btn">Kopírovat odkaz</button>
+          </div>
+          <dl class="kv">
+            <dt>Stav přenosu</dt><dd id="ytLife">–</dd>
+            <dt>Příjem videa</dt><dd id="ytHealth">–</dd>
+            <dt>Viditelnost</dt><dd id="ytPrivacy">–</dd>
+            <dt>Kanál</dt><dd id="ytChannel">–</dd>
+          </dl>
+          <ul id="ytIssues" class="err small" hidden></ul>
+          <p id="ytErr" class="err small" hidden></p>
+          <button type="button" id="btnEndBroadcast" class="danger-outline">Ukončit přenos utkání</button>
+          <p class="hint small">Zastavení vysílání přenos neukončí – po novém spuštění pokračuje na stejné adrese.
+            <b>Ukončit přenos utkání</b> ho na YouTube uzavře a další spuštění založí nový.</p>
+        </div>
+        <p class="hint small" id="keyHint">Visí-li YouTube Studio na „Preparing stream“, zkuste <b>Restartovat vysílání</b>.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Log</h2>
+      <pre id="log" class="log"></pre>
+    </div>
+  </section>
+
+  <!-- ============================================================ ZÁPIS / UTKÁNÍ (krok 3) -->
+  <section id="tab-zapis" class="tab">
+    <div id="zNoMatch" class="card placeholder" hidden>
+      <h2>Není otevřené žádné utkání</h2>
+      <p>Založte ho na záložce <a href="#utkani" data-goto="utkani">Utkání</a>.</p>
+    </div>
+    <div id="zMatch" hidden>
+      <div class="scorehead card">
+        <div class="sh-team" id="zHome"></div>
+        <div class="sh-score"><span id="zPts"></span><small id="zPins"></small></div>
+        <div class="sh-team right" id="zAway"></div>
+      </div>
+
+      <div class="controls">
+        <div class="seg" id="zParts" role="group" aria-label="Část utkání"></div>
+        <button id="btnUndo" title="Ctrl+Z">↶ Zpět</button>
+        <span id="zCloud" class="small muted"></span>
+        <label class="switch" title="Klávesová zkratka: G (mimo políčka)">
+          <input type="checkbox" id="chkOverlay2">
+          <span class="slider"></span>
+          <span class="switch-label">Grafika</span>
+        </label>
+      </div>
+
+      <div class="card">
+        <h2>Co ukazuje grafika</h2>
+        <div class="row actions">
+          <div class="seg" id="zModes">
+            <button data-mode="utkani">Lišta se skóre</button>
+            <button data-mode="zprava">Lišta + zpráva</button>
+            <button data-mode="vysledek">Tabulka všech soubojů</button>
+          </div>
+          <input id="zMessage" placeholder="Text zprávy, např. Přestávka" list="msgPresets">
+          <datalist id="msgPresets">
+            <option value="Přestávka"><option value="Rozcvičení"><option value="Konec 1. části">
+            <option value="Konec 2. části"><option value="Konec utkání"><option value="Technická přestávka">
+          </datalist>
+          <button id="btnMsg">Zobrazit zprávu</button>
+        </div>
+      </div>
+
+      <div id="zDuels"></div>
+      <p class="hint small">Po každé dráze zapište součty hráčů (Enter skočí na další políčko). Sloupec <b>Průběžně</b>
+        je nepovinný stav rozehrané dráhy – zobrazí se oranžově a po zapsání dráhy se sám smaže. Body se počítají samy.</p>
+
+      <div class="card">
+        <h2>Náhled grafiky</h2>
+        <div class="preview gfx-preview"><img id="gfxPreview" alt=""></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="tab-utkani" class="tab">
+    <form id="matchForm" class="card" autocomplete="off">
+      <h2 id="mfTitle">Nové utkání</h2>
+      <div class="row">
+        <label class="narrow">Datum <input type="date" name="datum"></label>
+        <label>Soutěž <input name="soutez" placeholder="1. KLM"></label>
+        <label class="narrow">Kolo <input name="kolo" placeholder="9"></label>
+        <label>Místo <input name="misto"></label>
+      </div>
+      <datalist id="teamList"></datalist>
+      <div class="teams">
+        <fieldset>
+          <legend>Domácí</legend>
+          <label>Název týmu <input name="domaci.nazev" list="teamList" required></label>
+          <label>Zkratka do grafiky <input name="domaci.zkratka" placeholder="např. Kutná Hora"></label>
+        </fieldset>
+        <fieldset>
+          <legend>Hosté</legend>
+          <label>Název týmu <input name="hoste.nazev" list="teamList" required></label>
+          <label>Zkratka do grafiky <input name="hoste.zkratka"></label>
+        </fieldset>
+      </div>
+      <table class="players">
+        <thead><tr><th>Souboj</th><th>Část</th><th>Domácí hráč</th><th>Hostující hráč</th></tr></thead>
+        <tbody id="mfPlayers"></tbody>
+      </table>
+      <p class="muted small">Pořadí řádků = pořadí soubojů. Výběrem známého týmu se doplní hráči z jeho poslední soupisky.</p>
+      <div class="row actions">
+        <button type="submit" class="primary" id="btnMatchSave">Založit utkání</button>
+        <button type="button" id="btnMatchNew" hidden>Založit nové utkání</button>
+        <button type="button" id="btnMatchClose" hidden>Zavřít utkání</button>
+        <span id="mfMsg" class="small"></span>
+      </div>
+    </form>
+
+    <div class="card">
+      <h2>Uložená utkání</h2>
+      <table class="saved"><tbody id="savedList"></tbody></table>
+    </div>
+  </section>
+
+  <!-- ============================================================ OBRAZ A GRAFIKA -->
+  <section id="tab-obraz" class="tab">
+    <div class="card">
+      <h2>Výřez z kamery <span class="tag cam">restart kamery</span></h2>
+      <p class="muted small">Obdélník přetáhněte myší, za rohy měníte velikost. Vpravo je výsledek tak, jak ho uvidí divák.</p>
+      <div class="editor-grid">
+        <div>
+          <div class="stage" id="cropStage">
+            <img id="snap" alt="Snímek z kamery" draggable="false">
+            <div id="cropRect" class="crop-rect">
+              <span class="h nw"></span><span class="h ne"></span><span class="h sw"></span><span class="h se"></span>
+            </div>
+            <div id="snapMsg" class="stage-msg">Načítám snímek z kamery…</div>
+          </div>
+          <div class="row actions">
+            <button type="button" id="btnSnap">↻ Nový snímek</button>
+            <button type="button" id="btnCropFull">Celý snímek</button>
+            <label class="check"><input type="checkbox" id="cropLock"> Držet poměr 16:9</label>
+            <label class="check"><input type="checkbox" id="cropRot"> Otočit o 180°</label>
+            <label class="check"><input type="checkbox" id="cropMirror"> Zrcadlit</label>
+          </div>
+        </div>
+        <div>
+          <canvas id="cropResult" class="result" width="640" height="360"></canvas>
+          <div class="row">
+            <label>Když výřez není 16:9
+              <select id="cropFit">
+                <option value="orez">oříznout na 16:9</option>
+                <option value="pruhy">doplnit černé pruhy</option>
+                <option value="roztahnout">roztáhnout</option>
+              </select></label>
+          </div>
+          <div class="row nums">
+            <label>X % <input type="number" id="cropX" step="0.1" min="0" max="100"></label>
+            <label>Y % <input type="number" id="cropY" step="0.1" min="0" max="100"></label>
+            <label>Šířka % <input type="number" id="cropW" step="0.1" min="5" max="100"></label>
+            <label>Výška % <input type="number" id="cropH" step="0.1" min="5" max="100"></label>
+          </div>
+          <p id="cropInfo" class="small muted"></p>
+          <div class="row actions">
+            <button type="button" class="primary" id="btnCropApply">Použít výřez</button>
+            <button type="button" id="btnCropRevert">Zahodit změny</button>
+            <span id="cropMsg" class="small"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Rozmístění grafiky <span class="tag live">hned, bez přerušení</span></h2>
+      <p class="muted small">Lištu se skóre a zprávu přetáhněte myší. Velikost měníte kolečkem myši nad blokem nebo posuvníkem.
+        Změny se ve vysílání projeví okamžitě. Uprostřed se blok přichytí.</p>
+      <div class="stage layout-stage" id="layoutStage">
+        <canvas id="layoutBg" width="1280" height="720"></canvas>
+        <img id="blkBar" class="blk" data-blk="lista" alt="Lišta se skóre" draggable="false">
+        <img id="blkMsg" class="blk" data-blk="zprava" alt="Zpráva" draggable="false">
+        <div id="guideV" class="guide-v" hidden></div>
+      </div>
+      <div class="row nums">
+        <label>Velikost lišty <input type="range" id="scaleBar" min="30" max="200" step="5"><span id="scaleBarV" class="small"></span></label>
+        <label>Velikost zprávy <input type="range" id="scaleMsg" min="30" max="200" step="5"><span id="scaleMsgV" class="small"></span></label>
+        <label>Neprůhlednost pozadí <input type="range" id="opacity" min="0" max="100" step="5"><span id="opacityV" class="small"></span></label>
+      </div>
+      <div class="row actions">
+        <button type="button" id="btnLayoutDefault">Výchozí rozmístění</button>
+        <select id="presetSel"><option value="">— předvolby —</option></select>
+        <button type="button" id="btnPresetLoad">Načíst</button>
+        <button type="button" id="btnPresetDel">Smazat</button>
+        <input id="presetName" placeholder="Název, např. Kuželna Hradec">
+        <button type="button" id="btnPresetSave">Uložit jako předvolbu</button>
+        <span id="layoutMsg" class="small"></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ NASTAVENÍ -->
+  <section id="tab-nastaveni" class="tab">
+    <form id="settings" autocomplete="off">
+      <p class="muted">Vše se ukládá do souboru <code>config.json</code> vedle aplikace. Štítek u každé skupiny
+        říká, co změna udělá s běžícím vysíláním.</p>
+
+      <fieldset class="card">
+        <legend>Kamera <span class="tag cam">restart kamery</span></legend>
+        <label class="check"><input type="checkbox" name="kamera.testovaciZdroj"> Testovací obrazec místo kamery</label>
+        <div class="row">
+          <label>Adresa (IP) <input name="kamera.host" placeholder="192.168.100.163"></label>
+          <label class="narrow">Port <input name="kamera.port" type="number" min="1" max="65535"></label>
+        </div>
+        <div class="row">
+          <label>Uživatel <input name="kamera.uzivatel"></label>
+          <label>Heslo <input name="kamera.heslo" type="password" data-secret="hesloNastaveno"></label>
+        </div>
+        <div class="row">
+          <label>Cesta streamu <input name="kamera.cesta" placeholder="h264Preview_01_main"></label>
+          <label class="narrow">Přenos <select name="kamera.transport"><option>tcp</option><option>udp</option></select></label>
+        </div>
+        <label>Vlastní úplná URL <span class="muted small">(nepovinné, přebije údaje výše)</span>
+          <input name="kamera.url" placeholder="rtsp://…"></label>
+        <div class="row actions">
+          <button type="button" id="btnTestCam">Otestovat kameru</button>
+          <span id="camTest" class="small"></span>
+        </div>
+      </fieldset>
+
+      <fieldset class="card">
+        <legend>YouTube <span class="tag out">restart vysílání</span></legend>
+        <label class="narrow">Režim <select name="youtube.rezim" id="ytMode">
+          <option value="api">Přes YouTube API (doporučeno)</option>
+          <option value="klic">Ručně zadaný klíč streamu</option>
+        </select></label>
+
+        <div id="ytApi" class="subsection">
+          <div class="row actions">
+            <span id="ytLogin" class="small"></span>
+            <button type="button" id="btnYtLogin">Přihlásit k YouTube</button>
+            <button type="button" id="btnYtLogout">Odhlásit</button>
+          </div>
+          <div class="row">
+            <label>Název přenosu <span class="muted small">({datum}, {cas} se doplní)</span>
+              <input name="youtube.nazevPrenosu"></label>
+            <label class="narrow">Viditelnost <select name="youtube.soukromi">
+              <option value="public">Veřejné</option>
+              <option value="unlisted">Neveřejné (jen s odkazem)</option>
+              <option value="private">Soukromé</option>
+            </select></label>
+          </div>
+          <details>
+            <summary class="small">Přístup k API (Google Cloud) – vyplňuje se jednou</summary>
+            <div class="row">
+              <label>Client ID <input name="youtube.clientId"></label>
+              <label>Client secret <input name="youtube.clientSecret" type="password" data-secret="secretNastaven"></label>
+            </div>
+            <p class="muted small">Po vyplnění klikněte na Uložit nastavení a pak na Přihlásit k YouTube.</p>
+          </details>
+        </div>
+
+        <div id="ytKey" class="subsection">
+          <label>Server <input name="youtube.server"></label>
+          <label>Klíč streamu <input name="youtube.klic" type="password" data-secret="klicNastaven"></label>
+          <p class="muted small">YouTube Studio → Vytvořit → Spustit živé vysílání → ikona Kopírovat u „Key“.
+            Každé nové spuštění může mít na YouTube novou adresu.</p>
+        </div>
+      </fieldset>
+
+      <fieldset class="card">
+        <legend>Výstup <span class="tag out">restart vysílání</span></legend>
+        <div class="row">
+          <label>Cíl <select name="vystup.cil">
+            <option value="youtube">YouTube</option>
+            <option value="soubor">Soubor (test)</option>
+            <option value="nic">Nikam (test výkonu)</option>
+          </select></label>
+          <label>Soubor <input name="vystup.souborCesta"></label>
+        </div>
+        <div class="row">
+          <label>Rozlišení <span class="tag all">úplný restart</span>
+            <select name="vystup.rozliseni">
+              <option value="1280x720">1280 × 720 (720p)</option>
+              <option value="1920x1080">1920 × 1080 (1080p)</option>
+            </select></label>
+          <label class="narrow">Snímků/s <span class="tag all">úplný restart</span>
+            <select name="vystup.fps"><option>25</option><option>30</option></select></label>
+          <label class="narrow">Datový tok videa (kb/s) <input name="vystup.datovyTokVideaKbps" type="number" min="500" max="20000" step="100"></label>
+        </div>
+        <div class="row">
+          <label>Kodér <select name="vystup.koder">
+            <option value="auto">Automaticky</option>
+            <option value="h264_nvenc">NVIDIA (NVENC)</option>
+            <option value="h264_qsv">Intel (Quick Sync)</option>
+            <option value="h264_amf">AMD (AMF)</option>
+            <option value="libx264">Procesor (x264)</option>
+          </select></label>
+          <label>Preset x264 <select name="vystup.presetX264">
+            <option>ultrafast</option><option>superfast</option><option>veryfast</option><option>faster</option><option>fast</option>
+          </select></label>
+        </div>
+        <label class="check"><input type="checkbox" name="vystup.hwDekodovani"> Hardwarové dekódování obrazu z kamery <span class="tag cam">restart kamery</span></label>
+        <div class="row actions">
+          <button type="button" id="btnTestEnc">Zjistit funkční kodéry</button>
+          <span id="encTest" class="small"></span>
+        </div>
+      </fieldset>
+
+      <fieldset class="card">
+        <legend>Zvuk</legend>
+        <div class="row">
+          <label>Zdroj <span class="tag cam">restart kamery</span>
+            <select name="zvuk.zdroj"><option value="kamera">Mikrofon kamery</option><option value="ticho">Ticho</option></select></label>
+          <label class="narrow">Datový tok (kb/s) <span class="tag out">restart vysílání</span>
+            <input name="zvuk.datovyTokKbps" type="number" min="32" max="320" step="32"></label>
+        </div>
+      </fieldset>
+
+      <fieldset class="card">
+        <legend>Grafika <span class="tag live">hned</span></legend>
+        <label class="check"><input type="checkbox" name="grafika.grafikaPriStartu"> Zobrazit grafiku hned po spuštění aplikace</label>
+      </fieldset>
+
+      <fieldset class="card">
+        <legend>Záloha a výsledky (Google Disk) <span class="tag live">hned</span></legend>
+        <label class="check"><input type="checkbox" name="cloud.zalohaNaDisk"> Zálohovat utkání, soupisky a nastavení grafiky na Google Disk</label>
+        <label class="check"><input type="checkbox" name="cloud.tabulkaVysledku"> Zapisovat výsledky do Google Tabulky (list Utkání a Hráči)</label>
+        <p id="cloudState" class="small"></p>
+        <div class="row actions">
+          <button type="button" id="btnCloudLogin" hidden>Přihlásit ke Google</button>
+          <button type="button" id="btnCloudSync">Synchronizovat teď</button>
+          <a id="cloudFolder" target="_blank" rel="noopener" hidden>Otevřít složku na Disku</a>
+          <a id="cloudSheet" target="_blank" rel="noopener" hidden>Otevřít tabulku výsledků</a>
+          <button type="button" id="btnCloudGfx" title="Rozmístění grafiky, předvolby, výřez a pravidla">Obnovit nastavení grafiky z Disku</button>
+        </div>
+        <p class="muted small">Používá stejné přihlášení jako YouTube. Aplikace vidí jen soubory, které sama vytvořila
+          (složka „KuzelkyStream“). Na jiném notebooku se po přihlášení utkání a soupisky stáhnou samy.
+          V Google Cloud musí být zapnuté <i>Google Drive API</i> a <i>Google Sheets API</i>.</p>
+      </fieldset>
+
+      <fieldset class="card">
+        <legend>Pravidla soutěže <span class="tag live">hned</span></legend>
+        <div class="row">
+          <label class="narrow">Hráčů v týmu <input name="pravidla.hracuNaTym" type="number" min="1" max="12"></label>
+          <label class="narrow">Drah <input name="pravidla.drah" type="number" min="1" max="8"></label>
+          <label class="narrow">Soubojů najednou (v části) <input name="pravidla.soubojuNaCast" type="number" min="1" max="12"></label>
+          <label class="narrow">Max. kuželek na dráhu <input name="pravidla.maxKuzelekNaDrahu" type="number" min="1"></label>
+        </div>
+        <div class="row">
+          <label class="narrow">Setový bod za výhru na dráze <input name="pravidla.sbVyhra" type="number" step="0.5" min="0"></label>
+          <label class="narrow">… za remízu na dráze <input name="pravidla.sbRemiza" type="number" step="0.5" min="0"></label>
+          <label class="narrow">Bodů za vyhraný souboj <input name="pravidla.bodSouboj" type="number" step="0.5" min="0"></label>
+          <label class="narrow">Bodů za vyšší součet týmu <input name="pravidla.bodyZaCelkem" type="number" step="0.5" min="0"></label>
+        </div>
+        <label class="check"><input type="checkbox" name="pravidla.remizaSoubojeRozhodujeKuzelky"> Při rovnosti setových bodů rozhoduje souboj vyšší počet kuželek</label>
+        <p class="muted small">Výchozí = 1. KLM: 6 hráčů, 4 dráhy, 2 souboje najednou, souboj 1 bod, celkový součet 2 body (celkem 8).
+          Změna počtu hráčů nebo drah upraví i otevřené utkání.</p>
+      </fieldset>
+
+      <fieldset class="card">
+        <legend>Aplikace <span class="tag">po novém spuštění aplikace</span></legend>
+        <div class="row">
+          <label class="narrow">Port webového rozhraní <input name="aplikace.port" type="number" min="1" max="65535"></label>
+          <label class="check"><input type="checkbox" name="aplikace.otevritProhlizec"> Otevřít prohlížeč při spuštění</label>
+        </div>
+      </fieldset>
+
+      <div class="savebar">
+        <button type="submit" class="primary">Uložit nastavení</button>
+        <button type="button" id="btnRevert">Zahodit změny</button>
+        <button type="button" id="btnReload" title="Použije config.json, pokud jste ho upravili ručně">Načíst znovu ze souboru</button>
+        <span id="saveMsg" class="small"></span>
+      </div>
+    </form>
+  </section>
+</main>
+<script src="app.js"></script>
+<script src="match.js"></script>
+<script src="editor.js"></script>
+</body>
+</html>
