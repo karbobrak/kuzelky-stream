@@ -20,6 +20,11 @@ type Rules struct {
 	DuelTieByPins   bool    `json:"remizaSoubojeRozhodujeKuzelky"`
 	TotalPinsPoints float64 `json:"bodyZaCelkem"`
 	MaxPinsPerLane  int     `json:"maxKuzelekNaDrahu"` // 30 throws × 9 pins = 270
+	ThrowsPerLane   int     `json:"hoduNaUsek"`        // 30 (120 hs = 4 × 30); for "substitute from throw N"
+	MaxSubs         int     `json:"stridaniNaTym"`     // substitutions allowed per team (SŘ čl. 12: 2, or 1 for smaller teams)
+	// Detailed: score full (plné), clearing (dorážka) and errors (chyby) per lane segment, like the
+	// official ČKA match report; the segment total is full + clearing.
+	Detailed bool `json:"podrobnyZapis"`
 	// LanePlan: which physical lane each player plays each lane segment on, per duel slot of a part
 	// (index 0 = first duel of every part). Only shown to the scorer; empty = not shown.
 	LanePlan []LaneSlot `json:"poradiDrah,omitempty"`
@@ -63,11 +68,23 @@ func (r Rules) LaneOf(i int, side string, j int) int {
 
 func DefaultRules() Rules {
 	return Rules{PlayersPerTeam: 6, Lanes: 4, DuelsPerPart: 2, SetWin: 1, SetDraw: 0.5, DuelPoint: 1,
-		DuelTieByPins: true, TotalPinsPoints: 2, MaxPinsPerLane: 270}
+		DuelTieByPins: true, TotalPinsPoints: 2, MaxPinsPerLane: 270, ThrowsPerLane: 30, MaxSubs: 2}
+}
+
+// Throws per lane segment (older configs have 0 = the standard 30).
+func (r Rules) Throws() int {
+	if r.ThrowsPerLane <= 0 {
+		return 30
+	}
+	return r.ThrowsPerLane
 }
 
 func (r Rules) Validate() error {
 	switch {
+	case r.ThrowsPerLane < 0 || r.ThrowsPerLane > 200:
+		return errors.New("hodů na úsek musí být 1–200")
+	case r.MaxSubs < 0 || r.MaxSubs > 12:
+		return errors.New("počet střídání na tým musí být 0–12")
 	case r.PlayersPerTeam < 1 || r.PlayersPerTeam > 12:
 		return errors.New("počet hráčů na tým musí být 1–12")
 	case r.Lanes < 1 || r.Lanes > 8:
@@ -104,9 +121,26 @@ func (t Team) Label() string {
 }
 
 // Pair is one lane segment of a duel: pins of the home and away player. nil = not played yet.
+// With detailed scoring HomeDet/AwayDet hold full/clearing/errors and Home/Away is full + clearing.
 type Pair struct {
-	Home *int `json:"d"`
-	Away *int `json:"h"`
+	Home    *int    `json:"d"`
+	Away    *int    `json:"h"`
+	HomeDet *Detail `json:"dPodrobne,omitempty"`
+	AwayDet *Detail `json:"hPodrobne,omitempty"`
+}
+
+// Detail of one player's lane segment as in the ČKA match report. Never modified in place
+// (the undo history shares them): replace the whole value.
+type Detail struct {
+	Full   *int `json:"p"`  // plné
+	Clear  *int `json:"d"`  // dorážka
+	Errors *int `json:"ch"` // chyby
+}
+
+// Sub: a substitute who took over the place from the given throw (1-based, SŘ čl. 12).
+type Sub struct {
+	Name      string `json:"jmeno"`
+	FromThrow int    `json:"odHodu"`
 }
 
 type Duel struct {
@@ -115,6 +149,51 @@ type Duel struct {
 	Lanes      []Pair `json:"useky"`
 	// Live: pins so far in the lane segment being played (not yet entered in Lanes). Optional.
 	Live Pair `json:"prubezne"`
+	// Substitutions (nil = none) and places left empty in the line-up (count as 0 pins, SŘ čl. 15).
+	HomeSub    *Sub `json:"dStridani,omitempty"`
+	AwaySub    *Sub `json:"hStridani,omitempty"`
+	HomeAbsent bool `json:"dNenastoupil,omitempty"`
+	AwayAbsent bool `json:"hNenastoupil,omitempty"`
+}
+
+// Player is the starting player of a side ("d"/"h").
+func (d Duel) Player(side string) string {
+	if side == "h" {
+		return d.AwayPlayer
+	}
+	return d.HomePlayer
+}
+
+// SubOf returns the side's substitution, or nil.
+func (d Duel) SubOf(side string) *Sub {
+	if side == "h" {
+		return d.AwaySub
+	}
+	return d.HomeSub
+}
+
+// Absent reports whether the side's place in the line-up is empty.
+func (d Duel) Absent(side string) bool {
+	if side == "h" {
+		return d.AwayAbsent
+	}
+	return d.HomeAbsent
+}
+
+// Current is who plays the place now (the substitute after a substitution).
+func (d Duel) Current(side string) string {
+	if s := d.SubOf(side); s != nil && strings.TrimSpace(s.Name) != "" {
+		return s.Name
+	}
+	return d.Player(side)
+}
+
+// Label names everyone who played the place: "Novák / Svoboda" after a substitution.
+func (d Duel) Label(side string) string {
+	if s := d.SubOf(side); s != nil && strings.TrimSpace(s.Name) != "" {
+		return d.Player(side) + " / " + s.Name
+	}
+	return d.Player(side)
 }
 
 // Overlay modes chosen on the scoring page.
@@ -135,7 +214,15 @@ type Match struct {
 	CurrentPart int    `json:"aktualniCast"` // 1-based
 	Mode        string `json:"stavGrafiky"`
 	Message     string `json:"zprava"`
+	// Interrupted: the match is stopped (technical failure, SŘ čl. 16); the graphics show the full
+	// result table with a notice. PrevMode/PrevMessage restore the graphics when play resumes.
+	Interrupted bool   `json:"preruseno,omitempty"`
+	PrevMode    string `json:"predchoziStav,omitempty"`
+	PrevMessage string `json:"predchoziZprava,omitempty"`
 }
+
+// InterruptedText is shown above the result table while the match is interrupted.
+const InterruptedText = "Utkání přerušeno"
 
 // New creates an empty match shaped by the rules.
 func New(r Rules) Match {
@@ -201,6 +288,48 @@ func (m Match) Validate(r Rules) error {
 		if err := errors.Join(check(d.Live.Home, fmt.Sprintf("souboj %d, průběžně domácí", i+1)),
 			check(d.Live.Away, fmt.Sprintf("souboj %d, průběžně hosté", i+1))); err != nil {
 			return err
+		}
+		for j, p := range d.Lanes {
+			for _, dt := range []struct {
+				det *Detail
+				who string
+			}{{p.HomeDet, "domácí"}, {p.AwayDet, "hosté"}} {
+				if dt.det == nil {
+					continue
+				}
+				where := fmt.Sprintf("souboj %d, %d. úsek, %s", i+1, j+1, dt.who)
+				if err := errors.Join(check(dt.det.Full, where+", plné"), check(dt.det.Clear, where+", dorážka")); err != nil {
+					return err
+				}
+				if e := dt.det.Errors; e != nil && (*e < 0 || *e > r.Throws()) {
+					return fmt.Errorf("%s: %d chyb není možné (0–%d)", where, *e, r.Throws())
+				}
+			}
+		}
+		for _, side := range []string{"d", "h"} {
+			if s := d.SubOf(side); s != nil {
+				if strings.TrimSpace(s.Name) == "" {
+					return fmt.Errorf("souboj %d: vyplňte jméno střídajícího hráče", i+1)
+				}
+				if total := r.Throws() * r.Lanes; s.FromThrow < 1 || s.FromThrow > total {
+					return fmt.Errorf("souboj %d: střídání od %d. hodu není možné (1–%d)", i+1, s.FromThrow, total)
+				}
+			}
+		}
+	}
+	for _, side := range []string{"d", "h"} {
+		n := 0
+		for _, d := range m.Duels {
+			if d.SubOf(side) != nil {
+				n++
+			}
+		}
+		if n > r.MaxSubs {
+			team := "domácí"
+			if side == "h" {
+				team = "hosté"
+			}
+			return fmt.Errorf("%s: %d střídání, pravidla dovolují %d", team, n, r.MaxSubs)
 		}
 	}
 	switch m.Mode {

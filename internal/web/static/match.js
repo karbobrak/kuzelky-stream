@@ -10,13 +10,14 @@ const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<
 window.loadMatch = async function (tab) {
   try { view = await api("GET", "/api/zapas"); } catch (e) { return; }
   if (tab === "utkani") { renderForm(); loadSaved(); loadRosters(); }
-  else renderScoring();
+  else { renderScoring(); loadRosters(); } // rosters feed the substitution dialog
 };
 
 function applyView(v) {
   view = v;
   renderScoring();
 }
+window.applyMatchView = (v) => { if (v && "zapas" in v) applyView(v); };
 
 // ================================================================== Zápis (scoring)
 
@@ -29,7 +30,9 @@ function renderScoring() {
   $("zHome").textContent = m.domaci.nazev;
   $("zAway").textContent = m.hoste.nazev;
   $("zPts").textContent = `${pts(r.dBody)} : ${pts(r.hBody)}`;
-  $("zPins").textContent = `kuželky ${pinsFmt(r.dKuzelky)} : ${pinsFmt(r.hKuzelky)}${r.dohrano ? " · konec" : ""}`;
+  $("zPins").textContent = `kuželky ${pinsFmt(r.dKuzelky)} : ${pinsFmt(r.hKuzelky)} · sety ${pts(r.dSety)} : ${pts(r.hSety)}` +
+    (r.dohrano ? " · konec" : "") + (m.preruseno ? " · PŘERUŠENO" : "");
+  window.setInterruptButtons(true, m.preruseno);
   $("btnUndo").disabled = !view.lzeZpet;
 
   // Part selector.
@@ -75,24 +78,40 @@ function renderDuels() {
     const d = m.souboje[di], dr = r.souboje[di];
     const card = document.createElement("div");
     card.className = "card duel";
+    const det = !!view.pravidla.podrobnyZapis;
     let head = `<th class="name">Souboj ${di + 1}</th>`;
-    for (let j = 0; j < lanes; j++) head += `<th>${j + 1}. úsek</th>`;
+    for (let j = 0; j < lanes; j++) head += `<th>${j + 1}. úsek${det ? `<br><span class="muted small">plné · dor. · ch.</span>` : ""}</th>`;
     head += `<th>Průběžně</th><th>Součet</th><th>SB</th><th>Body</th>`;
     const row = (side) => {
       const home = side === "d";
-      let h = `<td class="name">${esc(home ? d.domaci : d.hoste) || (home ? "domácí" : "hosté")}</td>`;
+      const absent = !!d[side + "Nenastoupil"], sub = d[side + "Stridani"];
+      const name = esc(home ? d.domaci : d.hoste) || (home ? "domácí" : "hosté");
+      const subTxt = absent ? `<span class="sub">nenastoupil</span>`
+        : sub ? `<span class="sub">⇄ ${esc(sub.jmeno)} od ${sub.odHodu}. hodu</span>` : "";
+      let h = `<td class="name${absent ? " absent" : ""}"><button type="button" class="pl" data-duel="${di}" data-side="${side}"
+        title="Střídání / nenastoupil">${name}</button>${subTxt}</td>`;
+      const dis = absent ? " disabled" : "";
       for (let j = 0; j < lanes; j++) {
         const v = d.useky[j][side];
         // Tab/Enter order: lane by lane, all players of the part (as the scores come in).
         const order = j * duels.length * 2 + k * 2 + (home ? 0 : 1);
         const lane = laneOf(di, side, j);
+        if (det) {
+          const dd = d.useky[j][side + "Podrobne"] || {};
+          const f = (fld, label, cls) => `<input class="pin ${cls}" inputmode="numeric" data-key="${di}:${j}:${side}:${fld}"
+            data-order="${order * 3 + ["p", "d", "ch"].indexOf(fld)}" placeholder="${label}" title="${label}${lane ? ` – dráha ${lane}` : ""}"${dis}
+            value="${dd[fld] ?? ""}">`;
+          h += `<td><div class="det">${f("p", "plné", "")}${f("d", "dor.", "")}${f("ch", "ch.", "ch")}</div>` +
+            `<span class="detsum">${v ?? (lane ? "dr. " + lane : "")}</span></td>`;
+          continue;
+        }
         const hint = lane ? ` placeholder="dr. ${lane}" title="${j + 1}. úsek na dráze ${lane}"` : "";
-        h += `<td><input class="pin" inputmode="numeric" data-key="${di}:${j}:${side}" data-order="${order}"${hint} value="${v ?? ""}"></td>`;
+        h += `<td><input class="pin" inputmode="numeric" data-key="${di}:${j}:${side}" data-order="${order}"${hint}${dis} value="${v ?? ""}"></td>`;
       }
       const lv = d.prubezne[side];
       const nowLane = laneOf(di, side, d.useky.findIndex((p) => p[side] == null)); // lane being played now
       const liveHint = nowLane ? ` placeholder="dr. ${nowLane}" title="právě hraje na dráze ${nowLane}"` : "";
-      h += `<td><input class="pin live" inputmode="numeric" data-key="${di}:-1:${side}" data-order="${1000 + k * 2 + (home ? 0 : 1)}"${liveHint} value="${lv ?? ""}"></td>`;
+      h += `<td><input class="pin live" inputmode="numeric" data-key="${di}:-1:${side}" data-order="${100000 + k * 2 + (home ? 0 : 1)}"${liveHint}${dis} value="${lv ?? ""}"></td>`;
       const sum = home ? dr.dSoucet : dr.hSoucet, sb = home ? dr.dSB : dr.hSB, p = home ? dr.dBody : dr.hBody;
       const win = dr.dohrano && p > (home ? dr.hBody : dr.dBody);
       h += `<td class="sum">${sum}</td><td class="sb">${pts(sb)}</td><td class="pts${win ? " win" : ""}">${dr.dohrano ? pts(p) : "–"}</td>`;
@@ -101,6 +120,7 @@ function renderDuels() {
     card.innerHTML = `<table><thead><tr>${head}</tr></thead><tbody>${row("d")}${row("h")}</tbody></table>`;
     box.append(card);
   });
+  box.querySelectorAll("button.pl").forEach((b) => { b.onclick = () => openPlayer(Number(b.dataset.duel), b.dataset.side); });
   box.querySelectorAll("input.pin").forEach((inp) => {
     markWarn(inp);
     inp.addEventListener("change", () => saveCell(inp));
@@ -116,7 +136,8 @@ function renderDuels() {
 function markWarn(inp) {
   const v = inp.value.trim();
   const n = Number(v);
-  inp.classList.toggle("err", v !== "" && (!/^\d+$/.test(v) || n > view.pravidla.maxKuzelekNaDrahu));
+  const max = inp.dataset.key.endsWith(":ch") ? (view.pravidla.hoduNaUsek || 30) : view.pravidla.maxKuzelekNaDrahu;
+  inp.classList.toggle("err", v !== "" && (!/^\d+$/.test(v) || n > max));
   inp.classList.toggle("warn", /^\d+$/.test(v) && n > 200 && n <= view.pravidla.maxKuzelekNaDrahu);
 }
 
@@ -127,22 +148,63 @@ function focusNext(inp) {
 }
 
 async function saveCell(inp) {
-  const [duel, lane, side] = inp.dataset.key.split(":");
+  const [duel, lane, side, field] = inp.dataset.key.split(":");
   const raw = inp.value.trim();
   if (raw !== "" && !/^\d+$/.test(raw)) { inp.classList.add("err"); return; }
   const value = raw === "" ? null : Number(raw);
   const cur = (() => {
     const d = view.zapas.souboje[duel];
-    return Number(lane) === -1 ? d.prubezne[side] : d.useky[lane][side];
+    if (Number(lane) === -1) return d.prubezne[side];
+    if (field) return (d.useky[lane][side + "Podrobne"] || {})[field];
+    return d.useky[lane][side];
   })();
   if ((cur ?? null) === value) return; // unchanged
-  await send("/api/zapas/hodnota", { souboj: Number(duel), usek: Number(lane), strana: side, hodnota: value });
+  await send("/api/zapas/hodnota", { souboj: Number(duel), usek: Number(lane), strana: side, hodnota: value, pole: field || "" });
 }
 
 async function send(url, body) {
   try { applyView(await api("POST", url, body)); showMsg(""); }
   catch (e) { showMsg(e.message); }
 }
+
+// ---- player dialog: substitution (SŘ čl. 12) or an empty place (čl. 15)
+let plTarget = null;
+function openPlayer(di, side) {
+  const d = view.zapas.souboje[di], r = view.vysledek.souboje[di];
+  const f = $("plForm").elements;
+  plTarget = { di, side };
+  const name = (side === "d" ? d.domaci : d.hoste) || "hráč";
+  const team = side === "d" ? view.zapas.domaci.nazev : view.zapas.hoste.nazev;
+  $("plTitle").textContent = `${name} (${team}, souboj ${di + 1})`;
+  const sub = d[side + "Stridani"];
+  // Default "from throw": the first throw of the first segment without a result.
+  const done = d.useky.filter((p) => p[side] != null).length;
+  f["jmeno"].value = sub ? sub.jmeno : "";
+  f["odHodu"].value = sub ? sub.odHodu : done * (view.pravidla.hoduNaUsek || 30) + 1;
+  f["odHodu"].max = view.pravidla.drah * (view.pravidla.hoduNaUsek || 30);
+  f["nenastoupil"].checked = !!d[side + "Nenastoupil"];
+  $("plClear").hidden = !sub;
+  $("plMsg").textContent = "";
+  // Offer the team's other players from its saved roster.
+  const roster = (typeof rosters !== "undefined" ? rosters : []).find((x) => x.nazev === team);
+  const used = new Set(view.zapas.souboje.map((x) => side === "d" ? x.domaci : x.hoste));
+  $("plNames").replaceChildren(...((roster && roster.hraci) || []).filter((p) => p && !used.has(p)).map((p) => new Option(p)));
+  $("plDlg").showModal();
+}
+$("plForm").addEventListener("submit", async (e) => {
+  const action = e.submitter ? e.submitter.value : "save";
+  if (action === "cancel" || !plTarget) return;
+  e.preventDefault();
+  const f = $("plForm").elements;
+  const body = { souboj: plTarget.di, strana: plTarget.side, nenastoupil: f["nenastoupil"].checked, stridani: null };
+  if (action === "save" && f["jmeno"].value.trim() && !body.nenastoupil) {
+    body.stridani = { jmeno: f["jmeno"].value.trim(), odHodu: Number(f["odHodu"].value) || 1 };
+  }
+  try {
+    applyView(await api("POST", "/api/zapas/hrac", body));
+    $("plDlg").close();
+  } catch (err) { $("plMsg").textContent = err.message; }
+});
 
 $("btnUndo").onclick = () => send("/api/zapas/zpet", {});
 document.addEventListener("keydown", (e) => {

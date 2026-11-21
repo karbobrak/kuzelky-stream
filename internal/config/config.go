@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 
+	"kuzelkystream/internal/fsutil"
 	"kuzelkystream/internal/match"
 	"kuzelkystream/internal/overlay"
 )
@@ -222,7 +223,7 @@ func Save(path string, cfg Config) error {
 	if err := os.WriteFile(tmp, data, 0o600); err != nil {
 		return err
 	}
-	return os.Rename(tmp, path)
+	return fsutil.Replace(tmp, path)
 }
 
 func (c Config) Validate() error {

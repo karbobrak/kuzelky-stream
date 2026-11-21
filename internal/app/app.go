@@ -44,11 +44,13 @@ type App struct {
 	yt ytState
 
 	overlayOn atomic.Bool
-	ovMu      sync.Mutex
-	ren       *overlay.Renderer
-	ovImg     *image.RGBA
-	ovVer     uint64
-	gfxGen    atomic.Uint64 // bumped on every change that affects the graphics
+	// overlayBeforeStop: was the graphics on before the match was interrupted (restored on resume).
+	overlayBeforeStop atomic.Bool
+	ovMu              sync.Mutex
+	ren               *overlay.Renderer
+	ovImg             *image.RGBA
+	ovVer             uint64
+	gfxGen            atomic.Uint64 // bumped on every change that affects the graphics
 
 	mt   matchState
 	snap snapshotCache
@@ -415,6 +417,8 @@ type Status struct {
 	Dropped      int64      `json:"zahozeno"`
 	YouTube      YTStatus   `json:"youtube"`
 	Version      string     `json:"verze"`
+	MatchOpen    bool       `json:"zapasOtevren"`
+	Interrupted  bool       `json:"preruseno"`
 }
 
 func (a *App) Status() Status {
@@ -422,6 +426,10 @@ func (a *App) Status() Status {
 	eng, enc, started, target := a.eng, a.encoder, a.started, a.cfg.Output.Target
 	a.mu.Unlock()
 	st := Status{Target: target, OverlayOn: a.overlayOn.Load(), YouTube: a.ytStatus(), Version: a.Version}
+	a.mt.mu.Lock()
+	st.MatchOpen = a.mt.cur != nil
+	st.Interrupted = st.MatchOpen && a.mt.cur.Interrupted
+	a.mt.mu.Unlock()
 	if eng == nil {
 		st.Camera.State, st.Output.State = stream.Stopped, stream.Stopped
 		return st

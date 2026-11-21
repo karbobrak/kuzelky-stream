@@ -88,9 +88,12 @@ func (a *App) updateSheet(ctx context.Context, cl *google.Client, folder, file s
 	for i, d := range m.Duels {
 		dr := res.Duels[i]
 		for _, side := range []string{"d", "h"} {
-			team, player, opp, sum, sets, pts := m.Home.Name, d.HomePlayer, d.AwayPlayer, dr.HomeSum, dr.HomeSets, dr.HomePts
+			team, player, opp, sum, sets, pts := m.Home.Name, d.Label("d"), d.Label("h"), dr.HomeSum, dr.HomeSets, dr.HomePts
 			if side == "h" {
-				team, player, opp, sum, sets, pts = m.Away.Name, d.AwayPlayer, d.HomePlayer, dr.AwaySum, dr.AwaySets, dr.AwayPts
+				team, player, opp, sum, sets, pts = m.Away.Name, d.Label("h"), d.Label("d"), dr.AwaySum, dr.AwaySets, dr.AwayPts
+			}
+			if d.Absent(side) {
+				player += " (nenastoupil)"
 			}
 			row := []any{m.Date, title, team, player, opp}
 			for _, p := range d.Lanes {

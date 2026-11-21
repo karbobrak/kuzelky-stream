@@ -209,7 +209,7 @@ func (r *Renderer) scoreBar(img *image.RGBA, v ScoreView) {
 			r.textRight(img, fc.smallR, lx, base, vals[j].c, vals[j].s)
 			lx -= laneW
 		}
-		r.text(img, fc.midR, x0+px(14), base, cText, fit(fc.midR, d.HomePlayer, nameW))
+		r.text(img, fc.midR, x0+px(14), base, nameColor(d, "d"), fit(fc.midR, barName(d, "d"), nameW))
 
 		// Away side.
 		ax := mid + setW/2
@@ -219,10 +219,25 @@ func (r *Renderer) scoreBar(img *image.RGBA, v ScoreView) {
 			r.text(img, fc.smallR, lx, base, lv.c, lv.s)
 			lx += laneW
 		}
-		r.textRight(img, fc.midR, bar.Max.X-px(14), base, cText, fit(fc.midR, d.AwayPlayer, nameW))
+		r.textRight(img, fc.midR, bar.Max.X-px(14), base, nameColor(d, "h"), fit(fc.midR, barName(d, "h"), nameW))
 	}
 	// Accent line under the bar.
 	fill(img, image.Rect(x0, bar.Max.Y-px(3), bar.Max.X, bar.Max.Y), cAccent, 100)
+}
+
+// barName: who plays the place now; an empty place shows a dash.
+func barName(d match.Duel, side string) string {
+	if d.Absent(side) {
+		return "–"
+	}
+	return d.Current(side)
+}
+
+func nameColor(d match.Duel, side string) color.RGBA {
+	if d.Absent(side) {
+		return cMuted
+	}
+	return cText
 }
 
 func diffText(d int) string {
@@ -293,12 +308,20 @@ func (r *Renderer) resultTable(img *image.RGBA, v ScoreView) {
 	m, res := v.Match, v.Result
 	w := px(1000)
 	rowH := px(40)
-	h := px(110) + rowH*len(m.Duels) + px(64)
+	h := px(110) + rowH*len(m.Duels) + px(98)
+	if m.Interrupted {
+		h += px(58)
+	}
 	box := image.Rect((r.w-w)/2, (r.h-h)/2, (r.w+w)/2, (r.h+h)/2)
 	fill(img, box, cBg, 92)
 	x0, y := box.Min.X, box.Min.Y
 	mid := x0 + w/2
 
+	if m.Interrupted {
+		fill(img, image.Rect(x0, y, box.Max.X, y+px(58)), cAccent, 100)
+		r.textCenter(img, fc.title, mid, y+px(43), cBg, match.InterruptedText)
+		y += px(58)
+	}
 	title := "Průběžný stav"
 	if res.Finished {
 		title = "Konečný výsledek"
@@ -316,8 +339,8 @@ func (r *Renderer) resultTable(img *image.RGBA, v ScoreView) {
 			fill(img, image.Rect(x0, y, box.Max.X, y+rowH), cBg2, 100)
 		}
 		base := y + px(28)
-		r.text(img, fc.midR, x0+px(20), base, cText, fit(fc.midR, d.HomePlayer, px(250)))
-		r.textRight(img, fc.midR, box.Max.X-px(20), base, cText, fit(fc.midR, d.AwayPlayer, px(250)))
+		r.text(img, fc.midR, x0+px(20), base, nameColor(d, "d"), fit(fc.midR, tableName(d, "d"), px(270)))
+		r.textRight(img, fc.midR, box.Max.X-px(20), base, nameColor(d, "h"), fit(fc.midR, tableName(d, "h"), px(270)))
 		if !dr.Started {
 			r.textCenter(img, fc.mid, mid, base, cMuted, "–")
 			y += rowH
@@ -336,6 +359,24 @@ func (r *Renderer) resultTable(img *image.RGBA, v ScoreView) {
 	r.textRight(img, fc.big, mid-px(110), base, cText, pins(res.HomePins))
 	r.text(img, fc.big, mid+px(110), base, cText, pins(res.AwayPins))
 	r.textRight(img, fc.small, box.Max.X-px(20), base, cMuted, diffText(res.HomePins-res.AwayPins))
+	// Set points of all duels and, with detailed scoring, full / clearing / errors.
+	base += px(34)
+	r.text(img, fc.small, x0+px(20), base, cMuted, "Sety")
+	r.textRight(img, fc.mid, mid-px(110), base, cText, Points(res.HomeSets))
+	r.text(img, fc.mid, mid+px(110), base, cText, Points(res.AwaySets))
+	if res.Home != (match.Totals{}) || res.Away != (match.Totals{}) {
+		r.textCenter(img, fc.tiny, mid, base-px(4), cMuted, "plné · dorážka · chyby")
+		r.textRight(img, fc.smallR, box.Max.X-px(20), base, cMuted, fmt.Sprintf("%s · %s · %d  |  %s · %s · %d",
+			pins(res.Home.Full), pins(res.Home.Clear), res.Home.Errors, pins(res.Away.Full), pins(res.Away.Clear), res.Away.Errors))
+	}
+}
+
+// tableName: everyone who played the place ("Novák / Svoboda"), or a note for an empty place.
+func tableName(d match.Duel, side string) string {
+	if d.Absent(side) {
+		return "nenastoupil"
+	}
+	return d.Label(side)
 }
 
 func (r *Renderer) textRight(img draw.Image, face font.Face, x, y int, c color.Color, s string) {

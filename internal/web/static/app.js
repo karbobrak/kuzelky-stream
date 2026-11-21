@@ -63,6 +63,7 @@ async function refreshStatus() {
   $("btnRestartOut").disabled = !running;
   $("chkOverlay").checked = s.grafika;
   $("chkOverlay2").checked = s.grafika;
+  window.setInterruptButtons(s.zapasOtevren, s.preruseno);
 
   const pill = $("pill");
   if (!running) { pill.textContent = "Zastaveno"; pill.className = "pill off"; }
@@ -182,6 +183,28 @@ async function setOverlay(on) {
   if (window.refreshGfxPreview) window.refreshGfxPreview();
 }
 $("chkOverlay").onchange = (e) => setOverlay(e.target.checked);
+
+// Interruption (SŘ čl. 16): full result table with "Utkání přerušeno"; a second click restores the graphics.
+let interrupted = false;
+window.setInterruptButtons = function (open, on) {
+  interrupted = !!on;
+  for (const id of ["btnInterrupt", "btnInterrupt2"]) {
+    const b = $(id);
+    b.hidden = !open;
+    b.textContent = on ? "▶ Pokračovat v utkání" : "⏸ Přerušit utkání";
+    b.classList.toggle("on", !!on);
+  }
+};
+async function toggleInterrupt() {
+  try {
+    const v = await api("POST", "/api/zapas/preruseni", { preruseno: !interrupted });
+    if (window.applyMatchView) window.applyMatchView(v);
+  } catch (e) { showMsg(e.message); }
+  refreshStatus();
+  if (window.refreshGfxPreview) window.refreshGfxPreview();
+}
+$("btnInterrupt").onclick = toggleInterrupt;
+$("btnInterrupt2").onclick = toggleInterrupt;
 $("chkOverlay2").onchange = (e) => setOverlay(e.target.checked);
 document.addEventListener("keydown", (e) => {
   const t = e.target.tagName;

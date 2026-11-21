@@ -25,6 +25,8 @@
     <div class="controls">
       <button id="btnStart" class="big primary">▶ Spustit vysílání</button>
       <button id="btnStop" class="big danger" hidden>■ Zastavit vysílání</button>
+      <button id="btnInterrupt" class="big interrupt" hidden
+        title="Grafika ukáže celou tabulku výsledků s nápisem Utkání přerušeno. Dalším kliknutím se vrátí, jak byla.">⏸ Přerušit utkání</button>
       <div class="ctl-group">
         <button id="btnRestartCam" title="Znovu se připojí ke kameře. YouTube se nepřeruší, divák chvíli vidí náhradní obraz.">↻ Znovu připojit kameru</button>
         <button id="btnRestartOut" title="Ukončí a znovu naváže spojení s YouTube. Krátký výpadek.">↻ Restartovat vysílání</button>
@@ -115,6 +117,7 @@
       <div class="controls">
         <div class="seg" id="zParts" role="group" aria-label="Část utkání"></div>
         <button id="btnUndo" title="Ctrl+Z">↶ Zpět</button>
+        <button id="btnInterrupt2" class="interrupt">⏸ Přerušit utkání</button>
         <span id="zCloud" class="small muted"></span>
         <label class="switch" title="Klávesová zkratka: G (mimo políčka)">
           <input type="checkbox" id="chkOverlay2">
@@ -142,7 +145,29 @@
 
       <div id="zDuels"></div>
       <p class="hint small">Po každé dráze zapište součty hráčů (Enter skočí na další políčko). Sloupec <b>Průběžně</b>
-        je nepovinný stav rozehrané dráhy – zobrazí se oranžově a po zapsání dráhy se sám smaže. Body se počítají samy.</p>
+        je nepovinný stav rozehrané dráhy – zobrazí se oranžově a po zapsání dráhy se sám smaže. Body se počítají samy.
+        Kliknutím na jméno hráče zapíšete <b>střídání</b> nebo že hráč <b>nenastoupil</b>.</p>
+
+      <dialog id="plDlg" class="card">
+        <form method="dialog" id="plForm">
+          <h2 id="plTitle">Hráč</h2>
+          <fieldset class="stack">
+            <legend>Střídání <span class="muted small">(SŘ čl. 12 – střídající pokračuje tam, kde vystřídaný skončil)</span></legend>
+            <div class="row">
+              <label>Střídající hráč <input name="jmeno" list="plNames" placeholder="jméno a příjmení"></label>
+              <label class="narrow">Od hodu <input name="odHodu" type="number" min="1"></label>
+            </div>
+            <datalist id="plNames"></datalist>
+          </fieldset>
+          <label class="check"><input type="checkbox" name="nenastoupil"> Místo v sestavě je prázdné – hráč nenastoupil (počítá se 0 kuželek)</label>
+          <p id="plMsg" class="small bad-text"></p>
+          <div class="row actions">
+            <button value="save" class="primary">Uložit</button>
+            <button value="clear" type="submit" id="plClear">Zrušit střídání</button>
+            <button value="cancel" formnovalidate>Zavřít</button>
+          </div>
+        </form>
+      </dialog>
 
       <div class="card">
         <h2>Náhled grafiky</h2>
@@ -449,6 +474,8 @@
           <label class="narrow">Úseků (drah) na hráče <input name="pravidla.drah" type="number" min="1" max="8"></label>
           <label class="narrow">Soubojů najednou (v části) <input name="pravidla.soubojuNaCast" type="number" min="1" max="12"></label>
           <label class="narrow">Max. kuželek na dráhu <input name="pravidla.maxKuzelekNaDrahu" type="number" min="1"></label>
+          <label class="narrow">Hodů na úsek <input name="pravidla.hoduNaUsek" type="number" min="1" max="200"></label>
+          <label class="narrow">Střídání na družstvo <input name="pravidla.stridaniNaTym" type="number" min="0" max="12"></label>
         </div>
         <div class="row">
           <label class="narrow">Setový bod za výhru na dráze <input name="pravidla.sbVyhra" type="number" step="0.5" min="0"></label>
@@ -457,6 +484,7 @@
           <label class="narrow">Bodů za vyšší součet týmu <input name="pravidla.bodyZaCelkem" type="number" step="0.5" min="0"></label>
         </div>
         <label class="check"><input type="checkbox" name="pravidla.remizaSoubojeRozhodujeKuzelky"> Při rovnosti setových bodů rozhoduje souboj vyšší počet kuželek</label>
+        <label class="check"><input type="checkbox" name="pravidla.podrobnyZapis"> Podrobný zápis: u každého úseku plné, dorážka a chyby (jako oficiální zápis ČKA)</label>
         <div class="row">
           <label>Rozpis drah <select id="lanePreset">
             <option value="">nezobrazovat</option>

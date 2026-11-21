@@ -11,6 +11,8 @@ import (
 	"unicode"
 
 	"golang.org/x/text/unicode/norm"
+
+	"kuzelkystream/internal/fsutil"
 )
 
 // Store keeps matches in data\zapasy\*.json and team rosters in data\tymy\*.json.
@@ -66,7 +68,7 @@ func writeAtomic(path string, v any) error {
 	if err := os.WriteFile(tmp, data, 0o644); err != nil {
 		return err
 	}
-	return os.Rename(tmp, path)
+	return fsutil.Replace(tmp, path)
 }
 
 // Save writes the match to name (a file name from FileName) and marks it as current.

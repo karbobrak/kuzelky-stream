@@ -443,3 +443,8 @@ oblasti místo okna konzole, napojení na automaty (snímání čítačů), expo
   úsecích. Předvolby „každý souboj střídá své 2 dráhy“ a „rotace přes všechny dráhy“, nebo vlastní.
   Zápis ukazuje v prázdných políčkách „dr. N“ a v políčku Průběžně dráhu, na které se právě hraje.
   Pole „Drah“ v pravidlech je ve skutečnosti počet úseků (po 30 hodech) a v UI se tak jmenuje.
+- **Pravidla ČKA (revize 2026-11-21)**: střídání (SŘ čl. 12; jméno + od kterého hodu, limit
+  `stridaniNaTym`, výchozí 2), nenastoupivší hráč (čl. 15; 0 kuželek, nelze střídat – výklad STP 01/2009),
+  podrobný zápis plné/dorážka/chyby (`podrobnyZapis`), součet setů družstev, přerušení utkání (čl. 16;
+  tlačítko na Vysílání: tabulka s „Utkání přerušeno“, grafika se vynutí zapnutá, pokračování vrátí
+  předchozí stav grafiky i přepínače). Rotace drah podle STP čl. 20.

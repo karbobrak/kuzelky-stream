@@ -12,6 +12,24 @@ type DuelResult struct {
 	HomePts   float64 `json:"dBody"` // duel point(s), only when Finished
 	AwayPts   float64 `json:"hBody"`
 	Started   bool    `json:"zacato"`
+	Home      Totals  `json:"dPodrobne"` // full / clearing / errors (detailed scoring only)
+	Away      Totals  `json:"hPodrobne"`
+}
+
+// Totals of full throws, clearing and errors over the entered segments with details.
+type Totals struct {
+	Full   int `json:"p"`
+	Clear  int `json:"d"`
+	Errors int `json:"ch"`
+}
+
+func (t *Totals) add(d *Detail) {
+	if d == nil {
+		return
+	}
+	t.Full += val(d.Full)
+	t.Clear += val(d.Clear)
+	t.Errors += val(d.Errors)
 }
 
 type Result struct {
@@ -23,6 +41,10 @@ type Result struct {
 	Finished  bool         `json:"dohrano"`
 	TotalPts  float64      `json:"bodyCelkem"` // points available in the match
 	PartsDone int          `json:"castiDohrano"`
+	HomeSets  float64      `json:"dSety"` // set points of all duels together ("Sety 16 : 8")
+	AwaySets  float64      `json:"hSety"`
+	Home      Totals       `json:"dPodrobne"`
+	Away      Totals       `json:"hPodrobne"`
 }
 
 func val(p *int) int {
@@ -48,7 +70,17 @@ func Compute(m Match, r Rules) Result {
 	allDone := len(m.Duels) > 0
 	for _, d := range m.Duels {
 		var dr DuelResult
+		zero := 0
 		for _, p := range d.Lanes {
+			// An empty place in the line-up scores 0 on every segment.
+			if d.HomeAbsent {
+				p.Home = &zero
+			}
+			if d.AwayAbsent {
+				p.Away = &zero
+			}
+			dr.Home.add(p.HomeDet)
+			dr.Away.add(p.AwayDet)
 			dr.HomeSum += val(p.Home)
 			dr.AwaySum += val(p.Away)
 			if p.Home != nil || p.Away != nil {
@@ -87,6 +119,10 @@ func Compute(m Match, r Rules) Result {
 		}
 		res.HomePins += dr.HomeSum
 		res.AwayPins += dr.AwaySum
+		res.HomeSets += dr.HomeSets
+		res.AwaySets += dr.AwaySets
+		res.Home.Full, res.Home.Clear, res.Home.Errors = res.Home.Full+dr.Home.Full, res.Home.Clear+dr.Home.Clear, res.Home.Errors+dr.Home.Errors
+		res.Away.Full, res.Away.Clear, res.Away.Errors = res.Away.Full+dr.Away.Full, res.Away.Clear+dr.Away.Clear, res.Away.Errors+dr.Away.Errors
 		res.Duels = append(res.Duels, dr)
 	}
 	for p := 1; p <= r.Parts(); p++ {

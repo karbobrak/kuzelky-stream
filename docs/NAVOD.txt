@@ -37,7 +37,11 @@ Přenos z kamery v kuželně na YouTube s grafikou skóre, které se zapisuje ru
    - Přepínač Grafika (nebo klávesa G) grafiku úplně skryje.
 4. Po utkání: Vysílání → „Ukončit přenos utkání“. Video na YouTube se uzavře jako záznam.
    Pouhé „Zastavit vysílání“ přenos neukončí. Po novém spuštění pokračuje na stejné adrese.
-5. Omylem založené nebo zkušební utkání či tým: záložka UTKÁNÍ → Smazat.
+5. Střídání (max. 2 na družstvo) nebo hráč, který nenastoupil: v Zápisu klikněte na jméno hráče.
+   U střídání vyplňte jméno střídajícího a od kterého hodu hraje. Nenastoupivší hráč má 0 kuželek.
+6. Přerušení utkání (porucha dráhy apod.): Vysílání → „Přerušit utkání“. Grafika ukáže celou
+   tabulku s nápisem „Utkání přerušeno“. „Pokračovat v utkání“ vrátí grafiku, jak byla.
+7. Omylem založené nebo zkušební utkání či tým: záložka UTKÁNÍ → Smazat.
    Smaže se na tomto počítači, na Google Disku (do koše) i z tabulky výsledků,
    ostatní notebooky ho smažou při příští synchronizaci.
 
@@ -79,3 +83,5 @@ Nastavení (záložka NASTAVENÍ, změny se ukládají do config.json):
 - Pravidla soutěže: výchozí 1. KLM (6 hráčů, 4 úseky na hráče, 8 bodů).
   Rozpis drah: na které dráze hraje hráč který úsek (např. každý souboj střídá jen své
   2 dráhy: 1–2 a 3–4). V Zápisu se pak v prázdném políčku ukáže „dr. 3“ = opsat z dráhy 3.
+  Podrobný zápis: u každého úseku se píše plné, dorážka a chyby jako v oficiálním zápisu ČKA
+  (součet úseku = plné + dorážka). Grafika pak ukazuje i součty plných, dorážky a chyb.

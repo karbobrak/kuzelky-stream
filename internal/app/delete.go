@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"kuzelkystream/internal/config"
+	"kuzelkystream/internal/fsutil"
 	"kuzelkystream/internal/google"
 )
 
@@ -46,7 +47,7 @@ func (a *App) saveTombs(m map[string]tombstone) error {
 	if err := os.WriteFile(tmp, b, 0o644); err != nil {
 		return err
 	}
-	return os.Rename(tmp, a.tombPath())
+	return fsutil.Replace(tmp, a.tombPath())
 }
 
 // tombstoned reports whether key was deleted (used to avoid reusing a deleted match's file name).

@@ -186,6 +186,8 @@ type Cell struct {
 	Lane  int    `json:"usek"`   // 0-based; -1 = live value of the lane being played
 	Side  string `json:"strana"` // "d" home, "h" away
 	Value *int   `json:"hodnota"`
+	// Field for detailed scoring: "p" full, "d" clearing, "ch" errors; "" = the segment total.
+	Field string `json:"pole,omitempty"`
 }
 
 func (a *App) SetCell(c Cell) error {
@@ -203,13 +205,50 @@ func (a *App) SetCell(c Cell) error {
 		default:
 			return fmt.Errorf("dráha %d neexistuje", c.Lane+1)
 		}
-		switch c.Side {
-		case "d":
-			p.Home = c.Value
-		case "h":
-			p.Away = c.Value
-		default:
+		if c.Side != "d" && c.Side != "h" {
 			return errors.New("strana musí být d nebo h")
+		}
+		if d.Absent(c.Side) {
+			return errors.New("hráč nenastoupil – jeho výsledky se nezapisují")
+		}
+		if c.Field != "" {
+			if c.Lane < 0 {
+				return errors.New("průběžný stav se zapisuje jen jako součet")
+			}
+			// Replace the detail (never modify it in place: the undo history shares it).
+			det := p.HomeDet
+			if c.Side == "h" {
+				det = p.AwayDet
+			}
+			nd := match.Detail{}
+			if det != nil {
+				nd = *det
+			}
+			switch c.Field {
+			case "p":
+				nd.Full = c.Value
+			case "d":
+				nd.Clear = c.Value
+			case "ch":
+				nd.Errors = c.Value
+			default:
+				return fmt.Errorf("neznámé pole %q", c.Field)
+			}
+			var sum *int // the segment counts once both full and clearing are entered
+			if nd.Full != nil && nd.Clear != nil {
+				v := *nd.Full + *nd.Clear
+				sum = &v
+			}
+			if c.Side == "d" {
+				p.HomeDet, p.Home = &nd, sum
+			} else {
+				p.AwayDet, p.Away = &nd, sum
+			}
+			c.Value = sum
+		} else if c.Side == "d" {
+			p.Home = c.Value
+		} else {
+			p.Away = c.Value
 		}
 		// Entering a finished lane value clears that player's live value (the lane is over).
 		if c.Lane >= 0 && c.Value != nil {
@@ -223,12 +262,96 @@ func (a *App) SetCell(c Cell) error {
 	})
 }
 
+// PlayerChange is a substitution or an empty place on the scoring page.
+type PlayerChange struct {
+	Duel   int        `json:"souboj"`
+	Side   string     `json:"strana"`
+	Sub    *match.Sub `json:"stridani"`    // nil = no substitution
+	Absent bool       `json:"nenastoupil"` // the place in the line-up is empty
+}
+
+// SetPlayer records a substitution (SŘ čl. 12) or an empty place (čl. 15) for one side of a duel.
+func (a *App) SetPlayer(pc PlayerChange) error {
+	return a.change(func(m *match.Match) error {
+		if pc.Duel < 0 || pc.Duel >= len(m.Duels) {
+			return fmt.Errorf("souboj %d neexistuje", pc.Duel+1)
+		}
+		d := &m.Duels[pc.Duel]
+		var sub *match.Sub
+		if pc.Sub != nil {
+			s := *pc.Sub
+			s.Name = strings.TrimSpace(s.Name)
+			sub = &s
+		}
+		if pc.Absent && sub != nil {
+			return errors.New("prázdné místo v sestavě nelze vystřídat (výklad STP 01/2009)")
+		}
+		switch pc.Side {
+		case "d":
+			d.HomeSub, d.HomeAbsent = sub, pc.Absent
+			if pc.Absent {
+				d.Live.Home = nil
+			}
+		case "h":
+			d.AwaySub, d.AwayAbsent = sub, pc.Absent
+			if pc.Absent {
+				d.Live.Away = nil
+			}
+		default:
+			return errors.New("strana musí být d nebo h")
+		}
+		return nil
+	})
+}
+
+// SetInterrupted stops the match (full result table with "Utkání přerušeno", graphics forced on)
+// or resumes it (the graphics return to what they showed before).
+func (a *App) SetInterrupted(on bool) error {
+	a.mt.mu.Lock()
+	was := a.mt.cur != nil && a.mt.cur.Interrupted
+	a.mt.mu.Unlock()
+	if on == was {
+		return nil
+	}
+	err := a.change(func(m *match.Match) error {
+		if on {
+			m.PrevMode, m.PrevMessage = m.Mode, m.Message
+			m.Mode, m.Message, m.Interrupted = match.ModeResult, "", true
+		} else {
+			m.Mode, m.Message, m.Interrupted = m.PrevMode, m.PrevMessage, false
+			if m.Mode == "" {
+				m.Mode = match.ModeMatch
+			}
+			m.PrevMode, m.PrevMessage = "", ""
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+	if on {
+		a.overlayBeforeStop.Store(a.overlayOn.Load())
+		a.SetOverlay(true)
+		a.Log.Print("utkání: přerušeno")
+	} else {
+		a.SetOverlay(a.overlayBeforeStop.Load())
+		a.Log.Print("utkání: pokračuje")
+	}
+	return nil
+}
+
 func (a *App) SetPart(p int) error {
 	return a.change(func(m *match.Match) error { m.CurrentPart = p; return nil })
 }
 
 func (a *App) SetMode(mode, message string) error {
-	return a.change(func(m *match.Match) error { m.Mode, m.Message = mode, message; return nil })
+	return a.change(func(m *match.Match) error {
+		if m.Interrupted { // the scorer changed the graphics by hand: this ends the interruption view
+			m.Interrupted, m.PrevMode, m.PrevMessage = false, "", ""
+		}
+		m.Mode, m.Message = mode, message
+		return nil
+	})
 }
 
 func (a *App) Undo() error {

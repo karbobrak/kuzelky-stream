@@ -221,6 +221,19 @@ details[open] summary { margin-bottom: 10px; }
 /* settings */
 fieldset.card { display: flex; flex-direction: column; gap: 10px; }
 .stack { display: flex; flex-direction: column; gap: 10px; }
+button.interrupt { background: #b7791f; border-color: #b7791f; color: #fff; }
+button.interrupt.on { background: #2f855a; border-color: #2f855a; }
+td.name button.pl { background: none; border: none; padding: 0; color: inherit; font: inherit; font-weight: 600; cursor: pointer; text-align: left; }
+td.name button.pl:hover { text-decoration: underline; }
+td.name .sub { display: block; font-size: 12px; font-weight: 400; color: var(--muted); }
+td.name.absent button.pl { color: var(--muted); text-decoration: line-through; }
+.det { display: flex; gap: 3px; justify-content: center; }
+.det input.pin { width: 46px; padding-left: 4px; padding-right: 4px; }
+.det input.pin.ch { width: 34px; }
+.detsum { display: block; text-align: center; font-size: 12px; color: var(--muted); margin-top: 2px; }
+dialog#plDlg { max-width: 560px; width: calc(100% - 32px); color: inherit; }
+dialog#plDlg::backdrop { background: rgba(0, 0, 0, .55); }
+.interrupt-note { background: #b7791f; color: #fff; border-radius: 8px; padding: 8px 12px; font-weight: 600; }
 table.laneplan { border-collapse: collapse; }
 table.laneplan th { text-align: left; font-size: 12px; color: var(--muted); font-weight: 600; padding: 0 8px 4px 0; }
 table.laneplan td { padding: 3px 8px 3px 0; }

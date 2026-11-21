@@ -357,7 +357,7 @@ func (a *App) RestoreGraphics(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-		var g gfxSettings
+		g := gfxSettings{Rules: match.DefaultRules()} // fields missing in an older file keep their defaults
 		if err := json.Unmarshal(body, &g); err != nil {
 			return fmt.Errorf("nastavení grafiky na Disku je poškozené: %w", err)
 		}
