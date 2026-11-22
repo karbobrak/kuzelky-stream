@@ -14,7 +14,19 @@ a vysílá na YouTube kanál oddílu.
 - **Obraz a grafika:** výřez z kamery, převod na 16:9 a rozmístění grafiky myší, vše za běhu.
 - **Záloha:** utkání a soupisky na Google Disk, výsledky do Google Tabulky.
 
-Návod pro obsluhu: [docs/NAVOD.txt](docs/NAVOD.txt). Podrobná specifikace: [SPECIFIKACE.md](SPECIFIKACE.md).
+- **Výsledky z ČKA:** utkání se dá založit z odkazu na vysledky.kuzelky.cz a výsledky se pak načítají samy.
+- **Více notebooků:** nastavení (kamera, YouTube, grafika, pravidla) se sdílí přes Google Disk oddílu –
+  nový notebook potřebuje jen jedno přihlášení.
+- **Automatické aktualizace:** při každém spuštění se aplikace sama aktualizuje z GitHub Releases.
+
+**Stažení:** [KuzelkyStream.zip – nejnovější verze](https://github.com/karbobrak/kuzelky-stream/releases/latest/download/KuzelkyStream.zip)
+
+Návod pro obsluhu je přímo v aplikaci (záložka **Nápověda**), krátký start v [docs/NAVOD.txt](docs/NAVOD.txt).
+Podrobná specifikace: [SPECIFIKACE.md](SPECIFIKACE.md).
+
+**Vydání nové verze** (správce): commitnout, pak `.uild.ps1 -Version X.Y.Z -Publish -Notes "co je nového"`.
+Potřebuje [GitHub CLI](https://cli.github.com/) přihlášené k účtu repozitáře (`gh auth login`).
+Aplikace v kuželnách si novou verzi stáhnou při příštím spuštění.
 Stránky pro Google OAuth: [popis aplikace](https://karbobrak.github.io/kuzelky-stream/),
 [zásady ochrany soukromí](https://karbobrak.github.io/kuzelky-stream/soukromi.html).
 

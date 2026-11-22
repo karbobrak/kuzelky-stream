@@ -73,6 +73,8 @@ type YouTube struct {
 	ChannelID    string `json:"kanalId"`
 	ChannelTitle string `json:"kanal"`
 	StreamID     string `json:"streamId"`
+	// The broadcast in progress (fixed address until it is ended), shared by all computers.
+	BroadcastID string `json:"prenosId,omitempty"`
 	// Broadcast defaults.
 	Privacy string `json:"soukromi"` // public | unlisted | private
 	Title   string `json:"nazevPrenosu"`
@@ -152,6 +154,38 @@ type Cloud struct {
 	Scopes       string `json:"opravneni"`
 	FolderID     string `json:"slozkaId"`
 	SheetID      string `json:"tabulkaId"`
+	// Settings shared through Google Drive (nastaveni.json): when the shared part last changed
+	// (unix ms) and whether this computer has already compared its settings with the Drive copy.
+	SettingsChanged int64 `json:"nastaveniZmeneno,omitempty"`
+	SettingsSynced  bool  `json:"nastaveniSynchronizovano,omitempty"`
+}
+
+// Shared is the part of the settings that travels to other computers through Google Drive:
+// everything except this computer's Drive sign-in, its encoder choice (hardware differs) and
+// the app's own port/browser options. The built-in OAuth client is added by each exe itself.
+func (c Config) Shared() Config {
+	s := c
+	s.Cloud.RefreshToken, s.Cloud.Account, s.Cloud.Scopes = "", "", ""
+	s.Cloud.SettingsChanged, s.Cloud.SettingsSynced = 0, false
+	s.Output.Encoder, s.Output.HWDecode = "", false
+	s.App = App{}
+	s.YouTube.ClientID, s.YouTube.ClientSecret = "", ""
+	return s
+}
+
+// WithLocal returns shared settings (from another computer) combined with this computer's own
+// fields from local.
+func (c Config) WithLocal(local Config) Config {
+	m := c
+	m.Cloud.RefreshToken, m.Cloud.Account, m.Cloud.Scopes = local.Cloud.RefreshToken, local.Cloud.Account, local.Cloud.Scopes
+	m.Cloud.SettingsChanged, m.Cloud.SettingsSynced = local.Cloud.SettingsChanged, local.Cloud.SettingsSynced
+	m.Output.Encoder, m.Output.HWDecode = local.Output.Encoder, local.Output.HWDecode
+	m.App = local.App
+	m.YouTube.ClientID, m.YouTube.ClientSecret = local.YouTube.ClientID, local.YouTube.ClientSecret
+	if m.Output.Encoder == "" {
+		m.Output.Encoder = "auto"
+	}
+	return m
 }
 
 func Default() Config {

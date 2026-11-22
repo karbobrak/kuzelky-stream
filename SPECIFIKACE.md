@@ -455,3 +455,14 @@ oblasti místo okna konzole, napojení na automaty (snímání čítačů), expo
   s daty je průběžný, dokud hráči nezačnou další úsek, nezačne další část nebo není zápas FINISHED.
   Aktuální část se přepíná podle hry (ruční volba platí, dokud se hra neposune). Načtení beze změny
   se neukládá (žádná historie ani upload). Ověřeno 2026-11-21 na živém zápase 2. KLM A.
+- **Sdílené nastavení přes Google Disk** (`nastaveni.json`, `config.Shared()`): vše kromě přihlášení
+  k Disku, kodéru/HW dekódování, portu a OAuth klienta. Novější kopie vyhrává (`nastaveniZmeneno`);
+  počítač, který se s Diskem ještě nesrovnal, vždy převezme kopii z Disku. ID přenosu YouTube je
+  v nastavení (dřív `data\prenos.json`), takže přenos má stejnou adresu z každého notebooku.
+  Na novém počítači stačí na Vysílání „Přihlásit Google účet oddílu“.
+- **Automatické aktualizace** (`internal/update`): při startu (před čímkoli jiným, takže nikdy během
+  vysílání) se zjistí poslední vydání na GitHub Releases; novější `KuzelkyStream.exe` se stáhne,
+  ověří proti `SHA256SUMS`, vymění (stará verze → `.exe.old`, smaže se při dalším startu) a spustí
+  s `-po-aktualizaci` (počká na uvolnění zámku jedné instance). Vydání: `build.ps1 -Publish`.
+  Stálý odkaz ke stažení: https://github.com/karbobrak/kuzelky-stream/releases/latest/download/KuzelkyStream.zip
+- **Nápověda a O aplikaci** jsou v aplikaci (záložka Nápověda); `NAVOD.txt` je jen krátký start.

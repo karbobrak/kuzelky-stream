@@ -239,7 +239,7 @@ func Serve(ln net.Listener, port int, a *app.App) error {
 	mux.HandleFunc("POST /api/cloud/obnovit-grafiku", func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), time.Minute)
 		defer cancel()
-		reply(w, nil, a.RestoreGraphics(ctx))
+		reply(w, nil, a.RestoreSettings(ctx))
 	})
 
 	// Editors (crop, layout).
@@ -392,6 +392,8 @@ func (s *Server) readSettings(r *http.Request) (config.Config, error) {
 	c.YouTube.ChannelTitle, c.YouTube.StreamID = saved.YouTube.ChannelTitle, saved.YouTube.StreamID
 	c.Cloud.Scopes, c.Cloud.FolderID, c.Cloud.SheetID = saved.Cloud.Scopes, saved.Cloud.FolderID, saved.Cloud.SheetID
 	c.Cloud.RefreshToken, c.Cloud.Account = saved.Cloud.RefreshToken, saved.Cloud.Account
+	c.YouTube.BroadcastID = saved.YouTube.BroadcastID
+	c.Cloud.SettingsChanged, c.Cloud.SettingsSynced = saved.Cloud.SettingsChanged, saved.Cloud.SettingsSynced
 	return c, nil
 }
 

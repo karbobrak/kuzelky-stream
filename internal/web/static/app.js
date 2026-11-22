@@ -57,6 +57,7 @@ async function refreshStatus() {
   try { s = await api("GET", "/api/stav"); } catch (_) { return; }
   running = s.bezi;
   $("ver").textContent = s.verze ? "v" + s.verze.replace(/^v/, "") : "";
+  $("aboutVer").textContent = s.verze || "–";
   $("btnStart").hidden = running;
   $("btnStop").hidden = !running;
   $("btnRestartCam").disabled = !running;
@@ -64,6 +65,7 @@ async function refreshStatus() {
   $("chkOverlay").checked = s.grafika;
   $("chkOverlay2").checked = s.grafika;
   window.setInterruptButtons(s.zapasOtevren, s.preruseno);
+  $("firstRun").hidden = !!s.diskPrihlasen;
 
   const pill = $("pill");
   if (!running) { pill.textContent = "Zastaveno"; pill.className = "pill off"; }
@@ -471,7 +473,7 @@ $("btnCloudSync").onclick = async (e) => {
   refreshCloud();
 };
 $("btnCloudGfx").onclick = async () => {
-  if (!confirm("Přepsat rozmístění grafiky, předvolby, výřez a pravidla verzí z Google Disku?")) return;
+  if (!confirm("Přepsat nastavení tohoto počítače (kamera, YouTube, grafika, výřez, pravidla) verzí z Google Disku?")) return;
   try { await api("POST", "/api/cloud/obnovit-grafiku", {}); await loadSettings(); $("saveMsg").textContent = "Obnoveno z Disku ✓"; }
   catch (err) { $("saveMsg").textContent = err.message; }
 };
@@ -492,6 +494,15 @@ async function googleLogin(url) {
         await loadSettings();
       }
     }, 2000);
+  } catch (err) { msg.textContent = err.message; msg.className = "small bad-text"; }
+};
+// First run on a new computer: one Google sign-in brings all the club's settings from Drive.
+$("btnFirstLogin").onclick = async () => {
+  const msg = $("firstRunMsg");
+  try {
+    const r = await api("POST", "/api/cloud/prihlaseni", {});
+    window.open(r.url, "_blank", "noopener");
+    msg.textContent = "Dokončete přihlášení v nové záložce. Nastavení se pak načte samo (do minuty)."; msg.className = "small";
   } catch (err) { msg.textContent = err.message; msg.className = "small bad-text"; }
 };
 $("btnYtLogout").onclick = async () => {
@@ -571,6 +582,14 @@ $("btnTestEnc").onclick = async (e) => {
 
 // ------------------------------------------------------------------ loops
 if (location.hash.length > 1) showTab(location.hash.slice(1));
+
+// Links inside the help scroll to their section without changing the address (it selects the tab).
+document.querySelectorAll('#tab-napoveda a[href^="#h-"]').forEach((a) => {
+  a.addEventListener("click", (e) => {
+    e.preventDefault();
+    document.querySelector(a.getAttribute("href")).scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+});
 refreshStatus(); refreshLog();
 setInterval(refreshStatus, 1000);
 setInterval(refreshLog, 1500);

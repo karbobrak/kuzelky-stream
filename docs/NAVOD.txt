@@ -1,92 +1,21 @@
-KUŽELKY STREAM – NÁVOD
-======================
+KUŽELKY STREAM – JAK ZAČÍT
+==========================
 
-Přenos z kamery v kuželně na YouTube s grafikou skóre, které se zapisuje ručně.
+Přenos z kamery v kuželně na YouTube s grafikou skóre.
+Podrobný návod je přímo v aplikaci: záložka NÁPOVĚDA.
 
+1. Složku KuzelkyStream rozbalte kamkoli (plocha, Dokumenty). Nic se neinstaluje.
+2. Spusťte KuzelkyStream.exe.
+   Ukáže-li Windows „Systém Windows ochránil váš počítač“: Další informace → Přesto spustit.
+3. Otevře se ovládání v prohlížeči a vedle hodin se objeví ikona kuželky
+   (levé kliknutí = ovládání, pravé kliknutí → Ukončit).
+4. Nový počítač: na záložce Vysílání klikněte „Přihlásit Google účet oddílu“.
+   Nastavení kamery, YouTube, grafika i utkání se načtou samy z Google Disku oddílu.
 
-1. SPUŠTĚNÍ
------------
-- Složku KuzelkyStream rozbalte kamkoli (plocha, Dokumenty, flash disk). Nic se neinstaluje.
-- Spusťte KuzelkyStream.exe.
-  - Při prvním spuštění může Windows ukázat „Systém Windows ochránil váš počítač“.
-    Klikněte na „Další informace“ → „Přesto spustit“.
-- Vedle hodin se objeví ikona kuželky a v prohlížeči se otevře ovládání.
-    šedá kuželka     = nevysílá se
-    červená kuželka  = vysílá se
-    oranžová kuželka = obnovuje se spojení / kamera je nedostupná
-- Levé kliknutí na ikonu otevře ovládání. Pravé kliknutí → Ukončit.
-- Notebook musí být ve stejné síti jako kamera a mít internet.
-  Během vysílání neusne sám.
+Aplikace se při každém spuštění sama aktualizuje na nejnovější verzi.
+Nová kopie ke stažení: https://github.com/karbobrak/kuzelky-stream/releases/latest
 
+POZOR: soubor config.json obsahuje přihlášení ke kanálu oddílu – složku nikomu neposílejte.
 
-2. PRŮBĚH UTKÁNÍ
-----------------
-1. Záložka UTKÁNÍ – nejjednodušší cesta: vložte odkaz na zápas z vysledky.kuzelky.cz
-   → „Založit utkání z odkazu“. Sestavy, střídání a výsledky (plné, dorážka, chyby) se pak
-   načítají samy každou minutu z oficiálního zápisu, který domácí oddíl během utkání vyplňuje.
-   Rozehraný úsek se ukazuje jako průběžný stav, setové body se počítají po jeho dohrání.
-   Při zapnutém načítání má přednost web – ruční zápis přepíše další načtení.
-   Bez odkazu: vyplňte týmy a hráče (pořadí řádků = pořadí soubojů) → Založit utkání.
-   Známé týmy se nabízejí a jejich hráči se doplní sami.
-   Utkání zakládejte PŘED spuštěním vysílání, aby se podle něj pojmenoval přenos na YouTube.
-2. Záložka VYSÍLÁNÍ: Spustit vysílání.
-   V kartě „Přenos na YouTube“ je odkaz pro diváky (tlačítko Kopírovat odkaz).
-   Do minuty by měl být stav „● ŽIVĚ“.
-3. Záložka ZÁPIS:
-   - Vyberte část (1, 2, 3).
-   - Po každé dráze zapište součty hráčů. Enter skočí na další políčko.
-   - Sloupec „Průběžně“ je nepovinný stav rozehrané dráhy.
-   - Body se počítají samy.
-   - Překlep: tlačítko Zpět nebo Ctrl+Z.
-   - Grafika: lišta se skóre / lišta + zpráva (např. Přestávka) / tabulka všech soubojů.
-   - Přepínač Grafika (nebo klávesa G) grafiku úplně skryje.
-4. Po utkání: Vysílání → „Ukončit přenos utkání“. Video na YouTube se uzavře jako záznam.
-   Pouhé „Zastavit vysílání“ přenos neukončí. Po novém spuštění pokračuje na stejné adrese.
-5. Střídání (max. 2 na družstvo) nebo hráč, který nenastoupil: v Zápisu klikněte na jméno hráče.
-   U střídání vyplňte jméno střídajícího a od kterého hodu hraje. Nenastoupivší hráč má 0 kuželek.
-6. Přerušení utkání (porucha dráhy apod.): Vysílání → „Přerušit utkání“. Grafika ukáže celou
-   tabulku s nápisem „Utkání přerušeno“. „Pokračovat v utkání“ vrátí grafiku, jak byla.
-7. Omylem založené nebo zkušební utkání či tým: záložka UTKÁNÍ → Smazat.
-   Smaže se na tomto počítači, na Google Disku (do koše) i z tabulky výsledků,
-   ostatní notebooky ho smažou při příští synchronizaci.
-
-
-3. KDYŽ NĚCO NEJDE
-------------------
-- Kamera vypadne: divák vidí „Přenos z kamery bude za chvíli obnoven“ i se skóre. Aplikace se
-  ke kameře připojí sama. Ručně: Vysílání → Znovu připojit kameru.
-- YouTube nevysílá nebo se zasekl: Vysílání → Restartovat vysílání.
-- „Přihlášení ke Google účtu vypršelo“: Nastavení → YouTube → Přihlásit k YouTube.
-- Nic z toho nepomáhá: ukončete aplikaci (pravé tlačítko na ikoně → Ukončit) a spusťte ji znovu.
-  Utkání ani skóre se neztratí, vše se průběžně ukládá.
-- Pro správce: záznam o běhu je ve složce logs (vždy 20 posledních spuštění).
-
-
-4. JINÝ NOTEBOOK
-----------------
-- Zkopírujte CELOU složku KuzelkyStream, včetně config.json.
-- Utkání a soupisky se stáhnou z Google Disku samy (je-li zapnutá záloha).
-- POZOR: config.json obsahuje heslo ke kameře a přihlášení k YouTube a Google Disku oddílu.
-  Složku nikomu neposílejte a nedávejte ji veřejně.
-
-
-5. PRO SPRÁVCE – PRVNÍ NASTAVENÍ
---------------------------------
-Nastavení (záložka NASTAVENÍ, změny se ukládají do config.json):
-- Kamera: IP adresa, uživatel, heslo → Otestovat kameru.
-  RTSP musí být v kameře zapnuté. Zvuk: zapněte v kameře mikrofon.
-- Místo IP kamery jde použít webkameru (USB nebo vestavěnou): Zdroj obrazu → Webkamera,
-  vyberte kameru, mikrofon a rozlišení → Otestovat kameru.
-  Webkameru může mít otevřenou jen jeden program (zavřete Teams, Zoom…).
-  Když je obraz šedý se zámkem nebo zvuk tichý: Nastavení Windows → Soukromí → Kamera / Mikrofon
-  → povolit přístup desktopovým aplikacím.
-- YouTube: režim „Přes YouTube API“ → Přihlásit k YouTube → vyberte účet/kanál oddílu.
-  Přístup k API (Google Cloud) je v aplikaci vestavěný, nic dalšího se nevyplňuje.
-  Google ukáže „aplikace není ověřená“ → Rozšířené → Přejít na Kuzelky Stream.
-- Záloha a výsledky: Přihlásit Google Disk (zvláštní přihlášení, může být i jiný účet než kanál).
-- Obraz a grafika: výřez z kamery, posun a velikost grafiky myší, předvolby pro různé kuželny.
-- Pravidla soutěže: výchozí 1. KLM (6 hráčů, 4 úseky na hráče, 8 bodů).
-  Rozpis drah: na které dráze hraje hráč který úsek (např. každý souboj střídá jen své
-  2 dráhy: 1–2 a 3–4). V Zápisu se pak v prázdném políčku ukáže „dr. 3“ = opsat z dráhy 3.
-  Podrobný zápis: u každého úseku se píše plné, dorážka a chyby jako v oficiálním zápisu ČKA
-  (součet úseku = plné + dorážka). Grafika pak ukazuje i součty plných, dorážky a chyb.
+Autor: Karel Borovský, borovsky.karel@gmail.com
+Projekt: https://github.com/karbobrak/kuzelky-stream

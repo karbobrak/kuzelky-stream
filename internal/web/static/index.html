@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Kuželky Stream</title>
+<link rel="icon" type="image/png" href="ikona.png">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -15,6 +16,7 @@
     <button role="tab" data-tab="utkani">Utkání</button>
     <button role="tab" data-tab="obraz">Obraz a grafika</button>
     <button role="tab" data-tab="nastaveni">Nastavení</button>
+    <button role="tab" data-tab="napoveda">Nápověda</button>
   </nav>
   <div id="pill" class="pill off">Zastaveno</div>
 </header>
@@ -38,6 +40,15 @@
       </label>
     </div>
     <div id="msg" class="msg" hidden></div>
+    <div id="firstRun" class="card first-run" hidden>
+      <h2>Vítejte na novém počítači</h2>
+      <p>Přihlaste Google účet oddílu. Nastavení kamery, YouTube kanál, grafika, pravidla i uložená utkání
+        se pak načtou samy – nic dalšího se nevyplňuje.</p>
+      <div class="row actions">
+        <button type="button" id="btnFirstLogin" class="big primary">Přihlásit Google účet oddílu</button>
+        <span id="firstRunMsg" class="small"></span>
+      </div>
+    </div>
 
     <div class="grid">
       <div class="card preview-card">
@@ -480,7 +491,7 @@
           <button type="button" id="btnCloudSync">Synchronizovat teď</button>
           <a id="cloudFolder" target="_blank" rel="noopener" hidden>Otevřít složku na Disku</a>
           <a id="cloudSheet" target="_blank" rel="noopener" hidden>Otevřít tabulku výsledků</a>
-          <button type="button" id="btnCloudGfx" title="Rozmístění grafiky, předvolby, výřez a pravidla">Obnovit nastavení grafiky z Disku</button>
+          <button type="button" id="btnCloudGfx" title="Kamera, YouTube, grafika, výřez a pravidla – jak je uložil poslední počítač">Načíst nastavení z Disku</button>
         </div>
         <p class="muted small">Disk se přihlašuje zvlášť (Google nedovolí YouTube a Disk v jednom přihlášení), může to být
           i jiný účet než kanál. Aplikace vidí jen soubory, které sama vytvořila (složka „KuzelkyStream“).
@@ -540,6 +551,150 @@
         <span id="saveMsg" class="small"></span>
       </div>
     </form>
+  </section>
+  <!-- ============================================================ NÁPOVĚDA -->
+  <section id="tab-napoveda" class="tab help">
+    <div class="card help-toc">
+      <h2>Nápověda</h2>
+      <p>Kuželky Stream vysílá obraz z kamery v kuželně na YouTube a přidává do něj grafiku se skóre utkání.</p>
+      <ol>
+        <li><a href="#h-start">Spuštění a nový počítač</a></li>
+        <li><a href="#h-utkani">Průběh utkání</a></li>
+        <li><a href="#h-zapis">Zápis výsledků</a></li>
+        <li><a href="#h-youtube">Vysílání na YouTube</a></li>
+        <li><a href="#h-problem">Když něco nejde</a></li>
+        <li><a href="#h-sprava">Pro správce – nastavení</a></li>
+        <li><a href="#h-about">O aplikaci</a></li>
+      </ol>
+    </div>
+
+    <div class="card" id="h-start">
+      <h2>1. Spuštění a nový počítač</h2>
+      <ul>
+        <li>Aplikace se neinstaluje. Složku <b>KuzelkyStream</b> rozbalte kamkoli (plocha, Dokumenty) a spusťte
+          <b>KuzelkyStream.exe</b>. Při prvním spuštění může Windows ukázat „Systém Windows ochránil váš počítač“ –
+          klikněte na <i>Další informace → Přesto spustit</i>.</li>
+        <li>Vedle hodin se objeví ikona kuželky: <b>šedá</b> = nevysílá se, <b>červená</b> = vysílá se,
+          <b>oranžová</b> = obnovuje se spojení nebo je kamera nedostupná. Levé kliknutí otevře ovládání,
+          pravé kliknutí → <i>Ukončit</i>.</li>
+        <li><b>Nový počítač:</b> na záložce Vysílání klikněte na <b>Přihlásit Google účet oddílu</b>. Nastavení
+          kamery, YouTube kanál, grafika, pravidla i uložená utkání se pak načtou samy z Google Disku oddílu.
+          Nic dalšího se nevyplňuje.</li>
+        <li><b>Aktualizace jsou automatické:</b> při každém spuštění si aplikace zkontroluje novou verzi, sama se
+          aktualizuje a znovu spustí. Během vysílání se nikdy neaktualizuje.</li>
+        <li>Notebook musí být ve stejné síti jako kamera a mít internet. Během vysílání sám neusne.</li>
+        <li>Nová verze ke stažení je vždy na
+          <a href="https://github.com/karbobrak/kuzelky-stream/releases/latest" target="_blank" rel="noopener">github.com/karbobrak/kuzelky-stream/releases</a>.</li>
+      </ul>
+    </div>
+
+    <div class="card" id="h-utkani">
+      <h2>2. Průběh utkání</h2>
+      <ol>
+        <li><b>Založte utkání</b> na záložce <a href="#utkani" data-goto="utkani">Utkání</a> – <b>ještě před spuštěním
+          vysílání</b>, aby se podle něj pojmenoval přenos na YouTube.
+          <ul>
+            <li><b>Nejjednodušší:</b> vložte odkaz na zápas z
+              <a href="https://vysledky.kuzelky.cz" target="_blank" rel="noopener">vysledky.kuzelky.cz</a> a klikněte
+              <b>Založit utkání z odkazu</b>. Sestavy, střídání a výsledky se pak načítají samy z oficiálního zápisu,
+              který domácí oddíl během utkání vyplňuje. Nic se nemusí zapisovat dvakrát.</li>
+            <li><b>Ručně:</b> vyplňte družstva a hráče (pořadí řádků = pořadí soubojů) → Založit utkání.
+              Známá družstva se nabízejí a jejich hráči se doplní sami.</li>
+          </ul></li>
+        <li><b>Spusťte vysílání</b> na záložce <a href="#vysilani" data-goto="vysilani">Vysílání</a>. V kartě
+          „Přenos na YouTube“ je odkaz pro diváky (tlačítko Kopírovat odkaz). Do minuty by měl být stav <b>● ŽIVĚ</b>.</li>
+        <li>Během utkání zapisujte výsledky (pokud se nenačítají z webu) – viz <a href="#h-zapis">Zápis</a>.</li>
+        <li><b>Přerušení</b> (porucha dráhy apod.): na Vysílání tlačítko <b>⏸ Přerušit utkání</b>. Grafika ukáže
+          celou tabulku s nápisem „Utkání přerušeno“. Tlačítko <b>▶ Pokračovat v utkání</b> vrátí grafiku, jak byla.</li>
+        <li><b>Po utkání:</b> Vysílání → <b>Ukončit přenos utkání</b>. Video na YouTube se uzavře jako záznam.
+          Pouhé „Zastavit vysílání“ přenos neukončí – po novém spuštění pokračuje na stejné adrese.</li>
+      </ol>
+    </div>
+
+    <div class="card" id="h-zapis">
+      <h2>3. Zápis výsledků</h2>
+      <ul>
+        <li>Vyberte <b>část</b> utkání (1, 2, 3). Při načítání z webu se přepíná sama.</li>
+        <li>Po každém úseku zapište součty hráčů, <b>Enter</b> skočí na další políčko. Šedé „dr. 3“ v prázdném
+          políčku říká, ze které dráhy výsledek opsat (nastavuje se v Rozpisu drah).</li>
+        <li>Sloupec <b>Průběžně</b> je nepovinný stav rozehraného úseku – v grafice je oranžově a po zapsání úseku
+          se sám smaže. Body a setové body se počítají samy.</li>
+        <li><b>Střídání</b> nebo hráč, který <b>nenastoupil</b>: klikněte na jméno hráče. U střídání vyplňte
+          jméno střídajícího a od kterého hodu hraje (nejvýš 2 střídání na družstvo). Nenastoupivší hráč má 0 kuželek.</li>
+        <li><b>Podrobný zápis</b> (zapíná se v Nastavení → Pravidla): u každého úseku se píše plné, dorážka a chyby
+          jako v oficiálním zápisu ČKA.</li>
+        <li>Překlep: tlačítko <b>Zpět</b> nebo <b>Ctrl+Z</b>.</li>
+        <li>Co ukazuje grafika: lišta se skóre / lišta + zpráva (např. Přestávka) / tabulka všech soubojů.
+          Přepínač <b>Grafika</b> (nebo klávesa <b>G</b>) grafiku úplně skryje.</li>
+        <li>Při zapnutém načítání z vysledky.kuzelky.cz má přednost web – ruční zápis přepíše další načtení.</li>
+        <li>Omylem založené nebo zkušební utkání či družstvo smažete na záložce Utkání tlačítkem <b>Smazat</b>
+          (smaže se i na Google Disku a z tabulky výsledků).</li>
+      </ul>
+    </div>
+
+    <div class="card" id="h-youtube">
+      <h2>4. Vysílání na YouTube</h2>
+      <ul>
+        <li>Přenos se zakládá sám a má <b>stálou adresu</b>, dokud ho neukončíte. Divák ho najde i na kanálu oddílu
+          v části Živě.</li>
+        <li><b>Znovu připojit kameru</b> – YouTube se nepřeruší, divák chvíli vidí náhradní obraz.</li>
+        <li><b>Restartovat vysílání</b> – znovu naváže spojení s YouTube (krátký výpadek). Pomáhá, když YouTube
+          ukazuje „Preparing stream“ nebo vysílání zamrzne.</li>
+      </ul>
+    </div>
+
+    <div class="card" id="h-problem">
+      <h2>5. Když něco nejde</h2>
+      <ul>
+        <li><b>Kamera vypadne:</b> divák vidí „Přenos z kamery bude za chvíli obnoven“ i se skóre. Aplikace se ke
+          kameře připojí sama. Ručně: Vysílání → Znovu připojit kameru.</li>
+        <li><b>YouTube nevysílá nebo se zasekl:</b> Vysílání → Restartovat vysílání.</li>
+        <li><b>„Přihlášení ke Google účtu vypršelo“:</b> Nastavení → YouTube → Přihlásit k YouTube.</li>
+        <li><b>Webkamera ukazuje šedý obrázek se zámkem:</b> kameru blokuje clonka, klávesa pro vypnutí kamery
+          nebo program výrobce notebooku (např. Lenovo Vantage – režim soukromí kamery).</li>
+        <li><b>Nic nepomáhá:</b> ukončete aplikaci (pravé tlačítko na ikoně → Ukončit) a spusťte ji znovu.
+          Utkání ani skóre se neztratí, vše se průběžně ukládá.</li>
+        <li>Pro správce: záznam o běhu je ve složce <code>logs</code> (20 posledních spuštění). Když aplikace spadne,
+          je příčina v souboru <code>…_pad.txt</code>.</li>
+      </ul>
+    </div>
+
+    <div class="card" id="h-sprava">
+      <h2>6. Pro správce – nastavení</h2>
+      <p class="muted small">Vše je na záložce <a href="#nastaveni" data-goto="nastaveni">Nastavení</a> a ukládá se do
+        <code>config.json</code>. Nastavení se přes Google Disk sdílí se všemi počítači oddílu (kromě kodéru a portu).</p>
+      <ul>
+        <li><b>Kamera:</b> IP kamera (RTSP) – adresa, uživatel, heslo → Otestovat kameru. RTSP musí být v kameře
+          zapnuté, pro zvuk zapněte v kameře mikrofon. Nebo <b>webkamera</b> (USB / vestavěná) s mikrofonem.</li>
+        <li><b>YouTube:</b> režim „Přes YouTube API“ → Přihlásit k YouTube → vyberte účet a kanál oddílu. Google může
+          ukázat „aplikace není ověřená“ → Rozšířené → Přejít na Kuzelky Stream.</li>
+        <li><b>Záloha a výsledky:</b> přihlášení Google Disku (může být i jiný účet než kanál). Utkání, soupisky a
+          nastavení se zálohují do složky KuzelkyStream, výsledky do tabulky „Kuželky – výsledky“.</li>
+        <li><b>Obraz a grafika:</b> výřez z kamery, posun a velikost grafiky myší, předvolby pro různé kuželny.</li>
+        <li><b>Pravidla soutěže:</b> výchozí 1. KLM (6 hráčů, 4 úseky, 8 bodů), počet střídání, podrobný zápis a
+          <b>rozpis drah</b> – na které dráze hraje hráč který úsek (např. střídání dvou drah 1–2 a 3–4, nebo rotace
+          přes všechny dráhy podle STP).</li>
+        <li><b>Bezpečnost:</b> <code>config.json</code> obsahuje přihlášení ke kanálu oddílu – složku nikomu
+          neposílejte. Při ztrátě notebooku zrušte přístup aplikace na
+          <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener">myaccount.google.com/permissions</a>.</li>
+      </ul>
+    </div>
+
+    <div class="card" id="h-about">
+      <h2>O aplikaci</h2>
+      <div class="about">
+        <img src="ikona.png" alt="" width="72" height="72">
+        <dl class="kv">
+          <dt>Aplikace</dt><dd><b>Kuželky Stream</b> – přenos kuželek na YouTube s grafikou skóre</dd>
+          <dt>Verze</dt><dd id="aboutVer">–</dd>
+          <dt>Autor</dt><dd>Karel Borovský</dd>
+          <dt>Kontakt</dt><dd><a href="mailto:borovsky.karel@gmail.com">borovsky.karel@gmail.com</a></dd>
+          <dt>Projekt</dt><dd><a href="https://github.com/karbobrak/kuzelky-stream" target="_blank" rel="noopener">github.com/karbobrak/kuzelky-stream</a></dd>
+          <dt>Používá</dt><dd><a href="https://ffmpeg.org" target="_blank" rel="noopener">FFmpeg</a> (LGPL/GPL),
+            YouTube Data API, Google Drive a Sheets API, výsledky z vysledky.kuzelky.cz</dd>
+        </dl>
+      </div>
+    </div>
   </section>
 </main>
 <script src="app.js"></script>

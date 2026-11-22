@@ -215,7 +215,7 @@ func TestCloudSync(t *testing.T) {
 		names[fl.Name] = true
 	}
 	file := a.MatchView().File
-	for _, want := range []string{"KuzelkyStream", "zapas_" + file, "tym_" + match.RosterFile("Domácí TJ"), gfxFile} {
+	for _, want := range []string{"KuzelkyStream", "zapas_" + file, "tym_" + match.RosterFile("Domácí TJ"), settingsFile} {
 		if !names[want] {
 			t.Errorf("Drive is missing %q (has %v)", want, names)
 		}
@@ -283,7 +283,7 @@ func TestCloudSyncFreshInstall(t *testing.T) {
 	}
 	found := false
 	for _, fl := range fg.files {
-		found = found || fl.Name == gfxFile
+		found = found || fl.Name == settingsFile
 	}
 	if !found {
 		t.Fatal("graphics settings were not uploaded")

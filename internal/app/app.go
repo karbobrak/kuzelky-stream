@@ -286,9 +286,15 @@ func (a *App) CheckConfig(c config.Config) (Impact, error) {
 }
 
 // ApplyConfig validates, saves config.json and applies the settings to a running stream.
-func (a *App) ApplyConfig(c config.Config) (Impact, error) {
+func (a *App) ApplyConfig(c config.Config) (Impact, error) { return a.applyConfig(c, false) }
+
+// applyConfig: fromDrive = settings that came from another computer (not sent back to Drive).
+func (a *App) applyConfig(c config.Config, fromDrive bool) (Impact, error) {
 	a.mu.Lock()
 	a.applyBuiltin(&c)
+	if !fromDrive {
+		a.stampShared(a.cfg, &c)
+	}
 	a.mu.Unlock()
 	if err := c.Validate(); err != nil {
 		return ImpactNone, err
@@ -311,8 +317,8 @@ func (a *App) ApplyConfig(c config.Config) (Impact, error) {
 		a.mt.mu.Unlock()
 	}
 	a.redraw() // layout or rules may have changed
-	if old.Picture != c.Picture || !old.Rules.Equal(c.Rules) {
-		a.markDirty("grafika")
+	if !fromDrive {
+		a.sharedChanged(old, c)
 	}
 	if eng == nil {
 		return ImpactNone, nil
@@ -404,23 +410,24 @@ type ProcStatus struct {
 }
 
 type Status struct {
-	Running      bool       `json:"bezi"`
-	Since        string     `json:"od,omitempty"`
-	Encoder      string     `json:"koder,omitempty"`
-	Target       string     `json:"cil"`
-	OverlayOn    bool       `json:"grafika"`
-	ShowingSlate bool       `json:"nahradniObraz"`
-	Camera       ProcStatus `json:"kamera"`
-	CameraFPS    float64    `json:"kameraFps"`
-	Output       ProcStatus `json:"vysilani"`
-	OutFPS       float64    `json:"vysilaniFps"`
-	BitrateKbps  float64    `json:"datovyTokKbps"`
-	Speed        float64    `json:"rychlost"`
-	Dropped      int64      `json:"zahozeno"`
-	YouTube      YTStatus   `json:"youtube"`
-	Version      string     `json:"verze"`
-	MatchOpen    bool       `json:"zapasOtevren"`
-	Interrupted  bool       `json:"preruseno"`
+	Running       bool       `json:"bezi"`
+	Since         string     `json:"od,omitempty"`
+	Encoder       string     `json:"koder,omitempty"`
+	Target        string     `json:"cil"`
+	OverlayOn     bool       `json:"grafika"`
+	ShowingSlate  bool       `json:"nahradniObraz"`
+	Camera        ProcStatus `json:"kamera"`
+	CameraFPS     float64    `json:"kameraFps"`
+	Output        ProcStatus `json:"vysilani"`
+	OutFPS        float64    `json:"vysilaniFps"`
+	BitrateKbps   float64    `json:"datovyTokKbps"`
+	Speed         float64    `json:"rychlost"`
+	Dropped       int64      `json:"zahozeno"`
+	YouTube       YTStatus   `json:"youtube"`
+	Version       string     `json:"verze"`
+	MatchOpen     bool       `json:"zapasOtevren"`
+	Interrupted   bool       `json:"preruseno"`
+	DriveSignedIn bool       `json:"diskPrihlasen"`
 }
 
 func (a *App) Status() Status {
@@ -429,6 +436,7 @@ func (a *App) Status() Status {
 	a.mu.Unlock()
 	st := Status{Target: target, OverlayOn: a.overlayOn.Load(), YouTube: a.ytStatus(), Version: a.Version}
 	a.mt.mu.Lock()
+	st.DriveSignedIn = driveSignedIn(a.Config())
 	st.MatchOpen = a.mt.cur != nil
 	st.Interrupted = st.MatchOpen && a.mt.cur.Interrupted
 	a.mt.mu.Unlock()

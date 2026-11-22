@@ -8,6 +8,9 @@ config.json, data\ a logs\ si aplikace vytvoří sama při prvním spuštění.
 Použití:
   .\build.ps1                                  # verze = dnešní datum, FFmpeg z PATH
   .\build.ps1 -Version 1.0.0 -FFmpeg C:\ffmpeg-essentials\bin\ffmpeg.exe
+  .\build.ps1 -Version 1.5.0 -Publish -Notes "Co je nového"
+      # navíc vydá verzi na GitHubu (Releases) – aplikace v kuželnách se při startu samy aktualizují.
+      # Potřebuje GitHub CLI (gh) přihlášené k účtu karbobrak: gh auth login
 Doporučený FFmpeg: build "essentials" z https://www.gyan.dev/ffmpeg/builds/ (menší než "full",
 obsahuje NVENC, Quick Sync i AMF).
 #>
@@ -17,7 +20,11 @@ param(
     # Google OAuth klient (typ Desktop app) vložený do exe, aby oddíl nemusel nic nastavovat v Google
     # Cloud. Výchozí: z config.json vedle skriptu (sekce youtube). Do gitu se nedostane.
     [string]$ClientId = $env:KUZELKY_CLIENT_ID,
-    [string]$ClientSecret = $env:KUZELKY_CLIENT_SECRET
+    [string]$ClientSecret = $env:KUZELKY_CLIENT_SECRET,
+    # Vydat na GitHub Releases (tag v<verze>): exe, NAVOD.txt, SHA256SUMS a KuzelkyStream.zip.
+    [switch]$Publish,
+    [string]$Notes = "",
+    [string]$Gh = $(if ($env:KUZELKY_GH) { $env:KUZELKY_GH } else { "gh" })
 )
 $ErrorActionPreference = "Stop"
 Set-Location $PSScriptRoot
@@ -27,6 +34,13 @@ if (-not $ClientId -and (Test-Path config.json)) {
     $ClientId, $ClientSecret = $yt.clientId, $yt.clientSecret
 }
 if ($ClientId -and -not $ClientSecret) { throw "Zadán ClientId bez ClientSecret." }
+if ($Publish) {
+    if ($Version -notmatch '^\d+\.\d+\.\d+$') { throw "Pro vydání zadejte verzi ve tvaru 1.5.0 (-Version)." }
+    if (-not $ClientId) { throw "Vydání musí mít vestavěný Google OAuth klient." }
+    & $Gh auth status *> $null
+    if ($LASTEXITCODE) { throw "GitHub CLI není přihlášené – spusťte: $Gh auth login" }
+    if (git status --porcelain) { throw "V pracovní kopii jsou necommitnuté změny – vydání musí odpovídat commitu." }
+}
 
 # Go: z PATH, nebo přenosná instalace v %USERPROFILE%\sdk.
 if (-not (Get-Command go -ErrorAction SilentlyContinue)) {
@@ -63,7 +77,8 @@ if ($ClientId) {
     Write-Host "   BEZ vestavěného Google OAuth klienta (Client ID se pak zadává v Nastavení)"
 }
 # Application icon: a Windows resource (.syso) that go build links into the exe.
-go run ./cmd/mkicon -o cmd/kuzelkystream/rsrc_windows_amd64.syso -png docs/ikona.png
+go run ./cmd/mkicon -o cmd/kuzelkystream/rsrc_windows_amd64.syso -png internal/web/static/ikona.png
+Copy-Item internal/web/static/ikona.png docs/ikona.png -Force
 if ($LASTEXITCODE) { throw "ikona se nepodařila vytvořit" }
 go build -trimpath -ldflags $ld -o "$out\KuzelkyStream.exe" ./cmd/kuzelkystream
 if ($LASTEXITCODE) { throw "go build selhal" }
@@ -89,3 +104,25 @@ $exe = (Get-Item "$out\KuzelkyStream.exe").Length / 1MB
 $ff = (Get-Item "$out\ffmpeg\ffmpeg.exe").Length / 1MB
 $z = (Get-Item $zip).Length / 1MB
 Write-Host ("hotovo: aplikace {0:N1} MB, ffmpeg {1:N0} MB, zip {2:N0} MB" -f $exe, $ff, $z)
+
+if ($Publish) {
+    # Assets with fixed names: the app downloads KuzelkyStream.exe + SHA256SUMS, and
+    # https://github.com/karbobrak/kuzelky-stream/releases/latest/download/KuzelkyStream.zip is the
+    # permanent download link for a new notebook.
+    $rel = Join-Path $PSScriptRoot "dist\release-$Version"
+    if (Test-Path $rel) { Remove-Item $rel -Recurse -Force }
+    New-Item -ItemType Directory $rel | Out-Null
+    Copy-Item "$out\KuzelkyStream.exe", "$out\NAVOD.txt" $rel
+    Copy-Item $zip "$rel\KuzelkyStream.zip"
+    $lines = foreach ($f in "KuzelkyStream.exe", "NAVOD.txt", "KuzelkyStream.zip") {
+        "{0}  {1}" -f (Get-FileHash "$rel\$f" -Algorithm SHA256).Hash.ToLower(), $f
+    }
+    [IO.File]::WriteAllText("$rel\SHA256SUMS", ($lines -join "`n") + "`n")
+    if (-not $Notes) { $Notes = "Verze $Version" }
+    Write-Host "== vydávám v$Version na GitHubu"
+    git push origin HEAD
+    & $Gh release create "v$Version" "$rel\KuzelkyStream.exe" "$rel\NAVOD.txt" "$rel\SHA256SUMS" "$rel\KuzelkyStream.zip" `
+        --title "Kuželky Stream $Version" --notes $Notes --target (git rev-parse HEAD)
+    if ($LASTEXITCODE) { throw "gh release create selhal" }
+    Write-Host "vydáno: https://github.com/karbobrak/kuzelky-stream/releases/tag/v$Version"
+}

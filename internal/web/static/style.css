@@ -221,6 +221,14 @@ details[open] summary { margin-bottom: 10px; }
 /* settings */
 fieldset.card { display: flex; flex-direction: column; gap: 10px; }
 .stack { display: flex; flex-direction: column; gap: 10px; }
+.help { max-width: 900px; }
+.help .card { margin-bottom: 14px; scroll-margin-top: 70px; }
+.help ul, .help ol { padding-left: 22px; line-height: 1.55; }
+.help li { margin: 4px 0; }
+.help a { color: var(--accent, #4a8cf7); }
+.about { display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap; }
+.about img { border-radius: 14px; }
+.first-run { border: 2px solid var(--accent, #4a8cf7); }
 button.interrupt { background: #b7791f; border-color: #b7791f; color: #fff; }
 button.interrupt.on { background: #2f855a; border-color: #2f855a; }
 td.name button.pl { background: none; border: none; padding: 0; color: inherit; font: inherit; font-weight: 600; cursor: pointer; text-align: left; }

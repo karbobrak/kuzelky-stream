@@ -36,7 +36,12 @@ type savedBroadcast struct {
 
 func (a *App) prenosPath() string { return filepath.Join(a.dir, "data", "prenos.json") }
 
+// loadSavedBroadcast: the broadcast id from the (shared) settings; older versions kept it in
+// data\prenos.json.
 func (a *App) loadSavedBroadcast() string {
+	if id := a.Config().YouTube.BroadcastID; id != "" {
+		return id
+	}
 	var s savedBroadcast
 	if b, err := os.ReadFile(a.prenosPath()); err == nil {
 		_ = json.Unmarshal(b, &s)
@@ -45,13 +50,14 @@ func (a *App) loadSavedBroadcast() string {
 }
 
 func (a *App) saveBroadcast(b *google.Broadcast) {
-	if b == nil {
-		_ = os.Remove(a.prenosPath())
-		return
+	id := ""
+	if b != nil {
+		id = b.ID
 	}
-	data, _ := json.MarshalIndent(savedBroadcast{ID: b.ID, Title: b.Title}, "", "  ")
-	_ = os.MkdirAll(filepath.Dir(a.prenosPath()), 0o755)
-	_ = os.WriteFile(a.prenosPath(), data, 0o644)
+	_ = os.Remove(a.prenosPath()) // migrated into the settings
+	if a.Config().YouTube.BroadcastID != id {
+		a.updateConfig(func(c *config.Config) { c.YouTube.BroadcastID = id })
+	}
 }
 
 func ytClient(y config.YouTube) *google.Client {
@@ -367,12 +373,15 @@ func (a *App) updateYouTubeConfig(f func(*config.YouTube)) {
 // updateConfig changes app-managed settings and saves config.json.
 func (a *App) updateConfig(f func(*config.Config)) {
 	a.mu.Lock()
+	old := a.cfg
 	f(&a.cfg)
+	a.stampShared(old, &a.cfg)
 	c := a.cfg
 	a.mu.Unlock()
 	if err := config.Save(a.cfgPath, c); err != nil {
 		a.Log.Printf("nelze uložit %s: %v", a.cfgPath, err)
 	}
+	a.sharedChanged(old, c)
 }
 
 // ---------------------------------------------------------------- status

@@ -68,7 +68,9 @@ func (a *App) SetLayout(l overlay.Layout) error {
 	a.mu.Lock()
 	c := a.cfg
 	a.mu.Unlock()
+	old := c
 	c.Overlay.Layout = l
+	a.stampShared(old, &c)
 	if err := c.Validate(); err != nil {
 		return err
 	}
@@ -77,9 +79,10 @@ func (a *App) SetLayout(l overlay.Layout) error {
 	}
 	a.mu.Lock()
 	a.cfg.Overlay.Layout = l
+	a.cfg.Cloud.SettingsChanged = c.Cloud.SettingsChanged
 	a.mu.Unlock()
 	a.redraw()
-	a.markDirty("grafika")
+	a.sharedChanged(old, c)
 	return nil
 }
 
@@ -112,14 +115,17 @@ func (a *App) Preset(action, name string) error {
 	default:
 		return fmt.Errorf("neznámá akce %q", action)
 	}
+	old := c
 	c.Overlay.Presets = presets
+	a.stampShared(old, &c)
 	if err := config.Save(a.cfgPath, c); err != nil {
 		return err
 	}
 	a.mu.Lock()
 	a.cfg.Overlay.Presets = presets
+	a.cfg.Cloud.SettingsChanged = c.Cloud.SettingsChanged
 	a.mu.Unlock()
-	a.markDirty("grafika")
+	a.sharedChanged(old, c)
 	a.Log.Printf("předvolba rozložení „%s“: %s", name, action)
 	return nil
 }

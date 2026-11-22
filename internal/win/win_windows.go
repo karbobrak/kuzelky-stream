@@ -124,3 +124,10 @@ func Version() string {
 	}
 	return s
 }
+
+// CloseHandle releases a handle (e.g. the single-instance mutex before trying again).
+func CloseHandle(h uintptr) {
+	if h != 0 {
+		_ = syscall.CloseHandle(syscall.Handle(h))
+	}
+}

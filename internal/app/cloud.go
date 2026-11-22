@@ -14,8 +14,6 @@ import (
 
 	"kuzelkystream/internal/config"
 	"kuzelkystream/internal/google"
-	"kuzelkystream/internal/match"
-	"kuzelkystream/internal/overlay"
 )
 
 // Cloud backup: every change marks an item dirty; a worker uploads dirty items to the app folder on
@@ -23,11 +21,12 @@ import (
 // uploads what Drive lacks and downloads matches/rosters the computer lacks (e.g. a new notebook).
 //
 // Drive files: zapas_<file>.json, tym_<file>.json, nastaveni-grafiky.json, each with appProperties
-// typ (zapas|tym|grafika|smazane), soubor (local file name) and zmeneno (local change time, unix ms).
+// typ (zapas|tym|nastaveni|smazane), soubor (local file name) and zmeneno (local change time, unix ms).
+// nastaveni.json holds the shared settings (camera, YouTube, graphics, rules…, see settings.go).
 
 const (
 	folderName   = "KuzelkyStream"
-	gfxFile      = "nastaveni-grafiky.json"
+	settingsFile = "nastaveni.json"
 	syncDelay    = 10 * time.Second
 	retryDelay   = time.Minute
 	sheetTitle   = "Kuželky – výsledky"
@@ -39,20 +38,12 @@ const (
 type cloudState struct {
 	mu        sync.Mutex
 	tombMu    sync.Mutex      // guards data\smazane.json
-	dirty     map[string]bool // "zapas:<file>", "tym:<file>", "grafika"
+	dirty     map[string]bool // "zapas:<file>", "tym:<file>", "nastaveni"
 	reconcile bool
 	ids       map[string]string // Drive name → file id
 	lastSync  time.Time
 	lastErr   string
 	wake      chan struct{}
-}
-
-// gfxSettings is what travels as "nastaveni-grafiky.json".
-type gfxSettings struct {
-	Layout  overlay.Layout            `json:"rozlozeni"`
-	Presets map[string]overlay.Layout `json:"predvolby"`
-	Picture config.Picture            `json:"obraz"`
-	Rules   match.Rules               `json:"pravidla"`
 }
 
 func (a *App) cloudReady(c config.Config) bool {
@@ -181,6 +172,9 @@ func (a *App) cloudSyncItems(ctx context.Context, c config.Config, dirty map[str
 		a.cl.ids = ids
 		a.cl.mu.Unlock()
 		if reconcile {
+			if err := a.syncSettings(ctx, cl, files, dirty); err != nil {
+				return err
+			}
 			if files, err = a.applyTombstones(ctx, cl, c, folder, files); err != nil {
 				return err
 			}
@@ -213,8 +207,8 @@ func (a *App) cloudSyncItems(ctx context.Context, c config.Config, dirty map[str
 func (a *App) localFile(key string) (path, driveName, typ, file string) {
 	data := filepath.Join(a.dir, "data")
 	switch {
-	case key == "grafika":
-		return "", gfxFile, "grafika", gfxFile
+	case key == "nastaveni":
+		return "", settingsFile, "nastaveni", settingsFile
 	case strings.HasPrefix(key, "zapas:"):
 		f := strings.TrimPrefix(key, "zapas:")
 		return filepath.Join(data, "zapasy", f), "zapas_" + f, "zapas", f
@@ -228,11 +222,10 @@ func (a *App) uploadItem(ctx context.Context, cl *google.Client, folder, key str
 	path, name, typ, file := a.localFile(key)
 	var data []byte
 	var mod time.Time
-	if typ == "grafika" {
+	if typ == "nastaveni" {
 		c := a.Config()
-		data, _ = json.MarshalIndent(gfxSettings{Layout: c.Overlay.Layout, Presets: c.Overlay.Presets,
-			Picture: c.Picture, Rules: c.Rules}, "", "  ")
-		mod = time.Now()
+		data, _ = json.MarshalIndent(c.Shared(), "", "  ")
+		mod = time.UnixMilli(c.Cloud.SettingsChanged)
 	} else {
 		var err error
 		if data, err = os.ReadFile(path); err != nil {
@@ -282,9 +275,7 @@ func (a *App) reconcileFiles(ctx context.Context, cl *google.Client, remote []go
 			}
 		}
 	}
-	if _, ok := remoteBy[gfxFile]; !ok {
-		dirty["grafika"] = true
-	}
+
 	// Drive → local (matches and rosters only; graphics settings are restored on request).
 	got := 0
 	for _, r := range remote {
@@ -334,8 +325,8 @@ func remoteTime(f google.DriveFile) time.Time {
 	return f.Modified
 }
 
-// RestoreGraphics downloads the graphics settings (layout, presets, crop, rules) from Drive.
-func (a *App) RestoreGraphics(ctx context.Context) error {
+// RestoreSettings replaces this computer's settings with the copy on Google Drive (button).
+func (a *App) RestoreSettings(ctx context.Context) error {
 	c := a.Config()
 	if !a.cloudReady(c) {
 		return errors.New("záloha na Disk není připravená – přihlaste Google Disk (Nastavení → Záloha a výsledky)")
@@ -350,26 +341,11 @@ func (a *App) RestoreGraphics(ctx context.Context) error {
 		return err
 	}
 	for _, f := range files {
-		if f.Name != gfxFile {
-			continue
+		if f.Name == settingsFile {
+			return a.downloadSettings(ctx, cl, f)
 		}
-		body, err := cl.Download(ctx, f.ID)
-		if err != nil {
-			return err
-		}
-		g := gfxSettings{Rules: match.DefaultRules()} // fields missing in an older file keep their defaults
-		if err := json.Unmarshal(body, &g); err != nil {
-			return fmt.Errorf("nastavení grafiky na Disku je poškozené: %w", err)
-		}
-		nc := a.Config()
-		nc.Overlay.Layout, nc.Overlay.Presets, nc.Picture, nc.Rules = g.Layout, g.Presets, g.Picture, g.Rules
-		_, err = a.ApplyConfig(nc)
-		if err == nil {
-			a.Log.Print("Google Disk: obnoveno nastavení grafiky, výřezu a pravidel")
-		}
-		return err
 	}
-	return errors.New("na Disku zatím žádné nastavení grafiky není")
+	return errors.New("na Disku zatím žádné nastavení není")
 }
 
 // FlushCloud uploads pending changes now (when the app is closing).

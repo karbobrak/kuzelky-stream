@@ -12,6 +12,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"os/exec"
 	"os/signal"
 	"path/filepath"
 	"runtime"
@@ -26,6 +27,7 @@ import (
 	"kuzelkystream/internal/config"
 	"kuzelkystream/internal/stream"
 	"kuzelkystream/internal/tray"
+	"kuzelkystream/internal/update"
 	"kuzelkystream/internal/web"
 	"kuzelkystream/internal/win"
 )
@@ -53,10 +55,18 @@ func main() {
 	dir := appDir()
 	cfgPath := flag.String("config", filepath.Join(dir, "config.json"), "cesta k config.json")
 	noBrowser := flag.Bool("bez-prohlizece", false, "neotevírat prohlížeč")
+	noUpdate := flag.Bool("bez-aktualizace", false, "nekontrolovat novou verzi")
+	afterUpdate := flag.Bool("po-aktualizaci", false, "spuštěno po aktualizaci (počkat na ukončení staré verze)")
 	flag.Parse()
 	portFile := filepath.Join(dir, "data", "port.txt")
 
-	if _, err := win.SingleInstance("KuzelkyStream"); err != nil {
+	h, err := win.SingleInstance("KuzelkyStream")
+	for i := 0; err != nil && *afterUpdate && i < 60; i++ { // the old version is still closing
+		win.CloseHandle(h)
+		time.Sleep(250 * time.Millisecond)
+		h, err = win.SingleInstance("KuzelkyStream")
+	}
+	if err != nil {
 		// Already running: just bring up its UI.
 		if b, err := os.ReadFile(portFile); err == nil {
 			if p, err := strconv.Atoi(strings.TrimSpace(string(b))); err == nil {
@@ -70,6 +80,15 @@ func main() {
 
 	logger, logBuf, closeLog := setupLog(dir)
 	defer closeLog()
+
+	// Keep the app current: a newer release replaces the exe and starts it again – before anything
+	// else runs, so an update can never interrupt a broadcast.
+	if exe, err := os.Executable(); err == nil {
+		update.Cleanup(exe)
+		if !*noUpdate && update.IsRelease(version) && selfUpdate(logger, exe) {
+			return
+		}
+	}
 
 	cfg, err := config.Load(*cfgPath)
 	switch {
@@ -168,6 +187,38 @@ func main() {
 	flushCtx, cancelFlush := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancelFlush()
 	a.FlushCloud(flushCtx) // last changes to Google Drive
+}
+
+// selfUpdate installs a newer release and starts it; true = this process should exit.
+func selfUpdate(logger *log.Logger, exe string) bool {
+	update.UserAgent = "KuzelkyStream/" + version
+	ctx, cancel := context.WithTimeout(context.Background(), 8*time.Second)
+	rel, err := update.Latest(ctx)
+	cancel()
+	if err != nil {
+		logger.Printf("aktualizace: nelze zjistit novou verzi (%v) – pokračuji s %s", err, version)
+		return false
+	}
+	if !update.Newer(rel.Tag, version) {
+		logger.Printf("aktualizace: %s je nejnovější verze", version)
+		return false
+	}
+	logger.Printf("aktualizace: stahuji verzi %s (běží %s)", rel.Version(), version)
+	ctx, cancel = context.WithTimeout(context.Background(), 3*time.Minute)
+	defer cancel()
+	if err := update.Install(ctx, rel, exe); err != nil {
+		logger.Printf("aktualizace se nepovedla: %v – pokračuji s %s", err, version)
+		return false
+	}
+	args := append([]string{"-po-aktualizaci"}, os.Args[1:]...)
+	cmd := exec.Command(exe, args...)
+	cmd.Dir = filepath.Dir(exe)
+	if err := cmd.Start(); err != nil {
+		logger.Printf("nová verze se nespustila (%v) – spusťte aplikaci znovu", err)
+		return false
+	}
+	logger.Printf("aktualizace: verze %s nainstalována, spouštím ji", rel.Version())
+	return true
 }
 
 // setupLog writes to the console (if there is one), a file in logs\ (one per start) and the
