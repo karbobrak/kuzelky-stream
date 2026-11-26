@@ -26,6 +26,8 @@ type ytState struct {
 	lastErr    string
 	logins     map[string]*google.Login
 	activeFor  int    // consecutive polls with the stream active while the broadcast is not live
+	idleFor    int    // consecutive polls where YouTube gets no video although we stream
+	kicked     string // broadcast whose connection was already re-opened because of idleFor
 	lastIssues string // last logged YouTube remarks
 }
 
@@ -249,7 +251,7 @@ func (a *App) pollYouTube(ctx context.Context, cfg config.Config) {
 	if b == nil || b.Ended() {
 		// Ended or deleted outside the app (YouTube Studio). Keep viewers served: start a new one.
 		a.Log.Print("YouTube: přenos byl ukončen mimo aplikaci – zakládám nový (bude mít novou adresu)")
-		if err := a.prepareYouTube(ctx, cfg); err != nil {
+		if err := a.switchBroadcast(ctx, cfg); err != nil {
 			a.setYTError(err)
 		}
 		return
@@ -264,7 +266,25 @@ func (a *App) pollYouTube(ctx context.Context, cfg config.Config) {
 		a.yt.activeFor = 0
 	}
 	activeFor := a.yt.activeFor
+	// We stream, the broadcast waits, but YouTube reports no incoming video: re-open the connection
+	// once per broadcast after about a minute (YouTube sometimes ignores an open connection).
+	waiting := (b.LifeCycle == "ready" || b.LifeCycle == "created") && h.Status != "active"
+	if waiting && a.Running() {
+		a.yt.idleFor++
+	} else {
+		a.yt.idleFor = 0
+	}
+	kick := a.yt.idleFor >= 4 && a.yt.kicked != b.ID
+	if kick {
+		a.yt.kicked, a.yt.idleFor = b.ID, 0
+	}
 	a.yt.mu.Unlock()
+	if kick {
+		if e := a.engine(); e != nil {
+			a.Log.Printf("YouTube: přenos „%s“ čeká a nepřijímá video – znovu navazuji spojení", b.Title)
+			e.RestartOutput()
+		}
+	}
 
 	// Auto-start normally switches the broadcast to live by itself. If YouTube receives video for
 	// ~45 s and still has not done it (the "Preparing stream" hang), switch it explicitly.
@@ -314,7 +334,21 @@ func (a *App) StartMatchBroadcast(ctx context.Context) error {
 	if cfg.YouTube.BroadcastKind == KindMatch && a.desiredKind(cfg) == KindMatch {
 		return nil // already the match broadcast
 	}
-	return a.prepareYouTube(ctx, cfg)
+	return a.switchBroadcast(ctx, cfg)
+}
+
+// switchBroadcast ends the current broadcast and binds a new one while streaming. After a
+// broadcast is completed YouTube stops taking video on the open connection, so the new one would
+// stay "upcoming": the connection is opened again (a few seconds' gap) to start it.
+func (a *App) switchBroadcast(ctx context.Context, cfg config.Config) error {
+	if err := a.prepareYouTube(ctx, cfg); err != nil {
+		return err
+	}
+	if e := a.engine(); e != nil {
+		a.Log.Print("YouTube: nový přenos – znovu navazuji spojení, aby se spustil")
+		e.RestartOutput()
+	}
+	return nil
 }
 
 // EndMatchBroadcast ends the match: its broadcast becomes a video, the score disappears and,
@@ -327,7 +361,7 @@ func (a *App) EndMatchBroadcast(ctx context.Context) error {
 		return a.EndBroadcast(ctx)
 	}
 	if a.Running() {
-		return a.prepareYouTube(ctx, a.Config()) // ends the match broadcast, starts the alley one
+		return a.switchBroadcast(ctx, a.Config()) // ends the match broadcast, starts the alley one
 	}
 	// Not streaming: just end the match broadcast; the next start is the alley.
 	if id := a.loadSavedBroadcast(); id != "" && cfg.YouTube.APIReady() {
