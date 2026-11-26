@@ -466,3 +466,11 @@ oblasti místo okna konzole, napojení na automaty (snímání čítačů), expo
   s `-po-aktualizaci` (počká na uvolnění zámku jedné instance). Vydání: `build.ps1 -Publish`.
   Stálý odkaz ke stažení: https://github.com/karbobrak/kuzelky-stream/releases/latest/download/KuzelkyStream.zip
 - **Nápověda a O aplikaci** jsou v aplikaci (záložka Nápověda); `NAVOD.txt` je jen krátký start.
+- **Zjednodušená hlavní obrazovka (1.6.0)**: záložka Přenos = odkaz na zápas (vysledky.kuzelky.cz)
+  s tlačítkem Otevřít stránku, jedno tlačítko Začít / Ukončit přenos zápasu (založí utkání z odkazu,
+  spustí vysílání; ukončení zastaví vysílání a uzavře přenos na YouTube), odkaz na YouTube a obraz.
+  Technické ovládání je pod „Podrobnosti pro správce“, ostatní záložky za přepínačem „Pokročilé“.
+- **Pravidla podle zápasu**: z vysledky.kuzelky.cz se přebírá počet hráčů a úseků/hodů (T120 = 4×30,
+  T100 = 2×50 …). Body za vyšší celkový součet se přičítají průběžně a souboj se počítá, jakmile mu web
+  přidělí body – skóre tak odpovídá tomu, co ukazuje oficiální web (test TestScoreMatchesWeb).
+  Šestnáctibodové hodnocení (čl. 18) je jen ruční volba; z živých bodů ho nelze spolehlivě poznat.

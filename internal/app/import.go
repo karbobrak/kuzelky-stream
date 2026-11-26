@@ -108,7 +108,7 @@ func (a *App) importFailed(err error) {
 
 // importApply merges the published match into the open one (if it is still the linked match).
 func (a *App) importApply(cm *cka.Match, url string) error {
-	rules := a.Config().Rules
+	rules := a.matchRules(cm)
 	a.imp.mu.Lock()
 	prevPart := a.imp.lastPart
 	a.imp.mu.Unlock()
@@ -158,6 +158,24 @@ func (a *App) importApply(cm *cka.Match, url string) error {
 		a.Log.Printf("výsledky ČKA: zápas %s", newStatus)
 	}
 	return nil
+}
+
+// matchRules adapts the competition rules to the followed match (segments, throws, players,
+// 8- or 16-point system) and saves them when they change – a club plays e.g. the 3. KLM
+// (120 hs, 8 points) with its A team and a regional league (100 hs, 16 points) with its B team.
+func (a *App) matchRules(cm *cka.Match) match.Rules {
+	c := a.Config()
+	r, desc := cm.Rules(c.Rules)
+	if r.Equal(c.Rules) {
+		return r
+	}
+	c.Rules = r
+	if _, err := a.ApplyConfig(c); err != nil {
+		a.Log.Printf("výsledky ČKA: pravidla zápasu nelze použít: %v", err)
+		return a.Config().Rules
+	}
+	a.Log.Printf("výsledky ČKA: pravidla podle zápasu – %s", desc)
+	return r
 }
 
 func lineup(m match.Match) string {
@@ -214,7 +232,7 @@ func (a *App) NewMatchFromURL(ctx context.Context, raw string) error {
 	if err != nil {
 		return err
 	}
-	rules := a.Config().Rules
+	rules := a.matchRules(cm)
 	m := match.New(rules)
 	cm.Apply(&m, rules)
 	if m.Home.Name == "" || m.Away.Name == "" {

@@ -72,7 +72,8 @@ func TestUnfinishedDuelAndLive(t *testing.T) {
 	if d.HomeSum != 150+145+70 || d.AwaySum != 140+66 {
 		t.Fatalf("sums with live = %d:%d", d.HomeSum, d.AwaySum)
 	}
-	if res.Finished || res.HomePts != 0 {
+	// Only the provisional 2 points for the higher team total (as vysledky.kuzelky.cz shows them).
+	if res.Finished || res.HomePts != 2 || res.AwayPts != 0 {
 		t.Fatalf("match = %+v", res)
 	}
 }

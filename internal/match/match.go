@@ -11,13 +11,16 @@ import (
 
 // Rules of the competition. Defaults are 1. KLM; everything is configurable.
 type Rules struct {
-	PlayersPerTeam  int     `json:"hracuNaTym"`
-	Lanes           int     `json:"drah"`
-	DuelsPerPart    int     `json:"soubojuNaCast"`
-	SetWin          float64 `json:"sbVyhra"`
-	SetDraw         float64 `json:"sbRemiza"`
-	DuelPoint       float64 `json:"bodSouboj"`
-	DuelTieByPins   bool    `json:"remizaSoubojeRozhodujeKuzelky"`
+	PlayersPerTeam int     `json:"hracuNaTym"`
+	Lanes          int     `json:"drah"`
+	DuelsPerPart   int     `json:"soubojuNaCast"`
+	SetWin         float64 `json:"sbVyhra"`
+	SetDraw        float64 `json:"sbRemiza"`
+	DuelPoint      float64 `json:"bodSouboj"`
+	DuelTieByPins  bool    `json:"remizaSoubojeRozhodujeKuzelky"`
+	// DuelByPins: the duel is decided by total pins only (národní šestnáctibodové hodnocení,
+	// SŘ čl. 18); set points are then shown but do not decide.
+	DuelByPins      bool    `json:"soubojRozhodujiKuzelky,omitempty"`
 	TotalPinsPoints float64 `json:"bodyZaCelkem"`
 	MaxPinsPerLane  int     `json:"maxKuzelekNaDrahu"` // 30 throws × 9 pins = 270
 	ThrowsPerLane   int     `json:"hoduNaUsek"`        // 30 (120 hs = 4 × 30); for "substitute from throw N"

@@ -9,8 +9,13 @@ Podrobný návod je přímo v aplikaci: záložka NÁPOVĚDA.
    Ukáže-li Windows „Systém Windows ochránil váš počítač“: Další informace → Přesto spustit.
 3. Otevře se ovládání v prohlížeči a vedle hodin se objeví ikona kuželky
    (levé kliknutí = ovládání, pravé kliknutí → Ukončit).
-4. Nový počítač: na záložce Vysílání klikněte „Přihlásit Google účet oddílu“.
+4. Nový počítač: na záložce Přenos klikněte „Přihlásit Google účet oddílu“.
    Nastavení kamery, YouTube, grafika i utkání se načtou samy z Google Disku oddílu.
+
+PŘENOS ZÁPASU:
+- Na vysledky.kuzelky.cz otevřete dnešní zápas a zkopírujte adresu stránky.
+- V aplikaci ji vložte do políčka „Odkaz na zápas“ a klikněte „Začít přenos zápasu“.
+- Po zápase klikněte „Ukončit přenos zápasu“.
 
 Aplikace se při každém spuštění sama aktualizuje na nejnovější verzi.
 Nová kopie ke stažení: https://github.com/karbobrak/kuzelky-stream/releases/latest

@@ -99,8 +99,8 @@ func (m *Match) lastSegment(pos, lanes int) int {
 // Apply copies the published line-up and results into dst, which keeps everything the web does
 // not know (short team names, graphics mode, message, interruption). The results service has no
 // "segment finished" flag, so the last segment with data counts as being played (it goes to the
-// live column, without set points) until the players start the next segment, a later part of the
-// match starts, or the match is finished. Returns the part being played (0 when unknown/finished).
+// live column, without set points) until the players start the next segment, the web awards the
+// duel its point, a later part of the match starts, or the match is finished. Returns the part being played (0 when unknown/finished).
 func (m *Match) Apply(dst *match.Match, r match.Rules) int {
 	if m.HomeTeam.Name != "" {
 		dst.Home.Name = m.HomeTeam.Name
@@ -151,7 +151,9 @@ func (m *Match) Apply(dst *match.Match, r match.Rules) int {
 		d.HomeSub, d.AwaySub = home.subFor(hp), away.subFor(ap)
 
 		last := lastSeg[i]
-		done := finished || laterStarted(i)
+		// The web awards a duel's point once it is over: then even its last segment is final.
+		decided := (hp != nil && hp.TeamPoints != nil) || (ap != nil && ap.TeamPoints != nil)
+		done := finished || decided || laterStarted(i)
 		d.Live = match.Pair{}
 		for j := range d.Lanes {
 			hl, al := lane(hp, j), lane(ap, j)

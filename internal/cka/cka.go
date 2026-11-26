@@ -46,12 +46,14 @@ type Team struct {
 
 type TeamResult struct {
 	IsHome        bool           `json:"isHome"`
+	TeamPoints    *float64       `json:"teamPoints"`
 	PlayerResults []PlayerResult `json:"playerResults"`
 	Substitutions []Substitution `json:"substitutions"`
 }
 
 type PlayerResult struct {
 	Position    int          `json:"position"` // 1-based place in the line-up
+	TeamPoints  *float64     `json:"teamPoints"`
 	Player      Person       `json:"player"`
 	LaneResults []LaneResult `json:"laneResults"`
 }

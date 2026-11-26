@@ -11,12 +11,13 @@
 <header class="top">
   <div class="brand">Kuželky Stream <span id="ver" class="small muted"></span></div>
   <nav class="tabs" role="tablist">
-    <button role="tab" data-tab="vysilani" class="active">Vysílání</button>
-    <button role="tab" data-tab="zapis">Zápis</button>
-    <button role="tab" data-tab="utkani">Utkání</button>
-    <button role="tab" data-tab="obraz">Obraz a grafika</button>
-    <button role="tab" data-tab="nastaveni">Nastavení</button>
+    <button role="tab" data-tab="vysilani" class="active">Přenos</button>
+    <button role="tab" data-tab="zapis" class="adv">Zápis</button>
+    <button role="tab" data-tab="utkani" class="adv">Utkání</button>
+    <button role="tab" data-tab="obraz" class="adv">Obraz a grafika</button>
+    <button role="tab" data-tab="nastaveni" class="adv">Nastavení</button>
     <button role="tab" data-tab="napoveda">Nápověda</button>
+    <button type="button" id="btnAdv" class="adv-toggle">Pokročilé ▸</button>
   </nav>
   <div id="pill" class="pill off">Zastaveno</div>
 </header>
@@ -24,21 +25,6 @@
 <main>
   <!-- ============================================================ VYSÍLÁNÍ -->
   <section id="tab-vysilani" class="tab active">
-    <div class="controls">
-      <button id="btnStart" class="big primary">▶ Spustit vysílání</button>
-      <button id="btnStop" class="big danger" hidden>■ Zastavit vysílání</button>
-      <button id="btnInterrupt" class="big interrupt" hidden
-        title="Grafika ukáže celou tabulku výsledků s nápisem Utkání přerušeno. Dalším kliknutím se vrátí, jak byla.">⏸ Přerušit utkání</button>
-      <div class="ctl-group">
-        <button id="btnRestartCam" title="Znovu se připojí ke kameře. YouTube se nepřeruší, divák chvíli vidí náhradní obraz.">↻ Znovu připojit kameru</button>
-        <button id="btnRestartOut" title="Ukončí a znovu naváže spojení s YouTube. Krátký výpadek.">↻ Restartovat vysílání</button>
-      </div>
-      <label class="switch" title="Klávesová zkratka: G">
-        <input type="checkbox" id="chkOverlay">
-        <span class="slider"></span>
-        <span class="switch-label">Grafika <kbd>G</kbd></span>
-      </label>
-    </div>
     <div id="msg" class="msg" hidden></div>
     <div id="firstRun" class="card first-run" hidden>
       <h2>Vítejte na novém počítači</h2>
@@ -50,16 +36,58 @@
       </div>
     </div>
 
-    <div class="grid">
-      <div class="card preview-card">
-        <h2>Náhled vysílaného obrazu <span class="muted small">(1× za sekundu)</span></h2>
-        <div class="preview">
-          <img id="preview" alt="" hidden>
-          <div id="previewEmpty" class="preview-empty">Vysílání neběží</div>
-          <div id="slateBadge" class="slate-badge" hidden>Divák vidí náhradní obraz – kamera je nedostupná</div>
-        </div>
+    <!-- The simple screen: match link, one start/end button, YouTube link, picture. -->
+    <div class="card simple">
+      <label class="simple-label" for="sUrl">Odkaz na zápas z výsledků ČKA</label>
+      <div class="simple-url">
+        <input id="sUrl" type="url" placeholder="https://vysledky.kuzelky.cz/detail-zapasu/…" autocomplete="off">
+        <a id="sOpen" class="button" href="https://vysledky.kuzelky.cz" target="_blank" rel="noopener">Otevřít stránku ↗</a>
       </div>
-      <div class="stack">
+      <p class="muted small">Odkaz zkopírujte z adresního řádku stránky zápasu na vysledky.kuzelky.cz.
+        Výsledky se pak do vysílání načítají samy.</p>
+      <div id="sMatch" class="simple-match" hidden></div>
+
+      <div class="simple-actions">
+        <button type="button" id="btnGo" class="huge primary">▶ Začít přenos zápasu</button>
+        <button type="button" id="btnEnd" class="huge danger" hidden>■ Ukončit přenos zápasu</button>
+        <button id="btnInterrupt" class="big interrupt" hidden
+          title="Grafika ukáže celou tabulku výsledků s nápisem Utkání přerušeno. Dalším kliknutím se vrátí, jak byla.">⏸ Přerušit utkání</button>
+      </div>
+      <div id="sMsg" class="simple-msg" hidden></div>
+
+      <div id="sYt" class="simple-yt" hidden>
+        <span class="muted">Přenos na YouTube:</span>
+        <a id="sYtLink" target="_blank" rel="noopener"></a>
+        <button type="button" id="btnSCopy">Kopírovat odkaz</button>
+        <span id="sYtState" class="small"></span>
+      </div>
+    </div>
+
+    <div class="card preview-card">
+      <h2>Vysílaný obraz</h2>
+      <div class="preview">
+        <img id="preview" alt="" hidden>
+        <div id="previewEmpty" class="preview-empty">Vysílání neběží</div>
+        <div id="slateBadge" class="slate-badge" hidden>Divák vidí náhradní obraz – kamera je nedostupná</div>
+      </div>
+    </div>
+
+    <details class="card advanced">
+      <summary>Podrobnosti pro správce</summary>
+      <div class="controls">
+        <button id="btnStart" class="primary">▶ Spustit jen vysílání</button>
+        <button id="btnStop" class="danger" hidden>■ Zastavit vysílání</button>
+        <div class="ctl-group">
+          <button id="btnRestartCam" title="Znovu se připojí ke kameře. YouTube se nepřeruší, divák chvíli vidí náhradní obraz.">↻ Znovu připojit kameru</button>
+          <button id="btnRestartOut" title="Ukončí a znovu naváže spojení s YouTube. Krátký výpadek.">↻ Restartovat vysílání</button>
+        </div>
+        <label class="switch" title="Klávesová zkratka: G">
+          <input type="checkbox" id="chkOverlay">
+          <span class="slider"></span>
+          <span class="switch-label">Grafika <kbd>G</kbd></span>
+        </label>
+      </div>
+      <div class="grid3">
         <div class="card">
           <h2>Kamera</h2>
           <dl class="kv">
@@ -102,14 +130,11 @@
           <p class="hint small">Zastavení vysílání přenos neukončí – po novém spuštění pokračuje na stejné adrese.
             <b>Ukončit přenos utkání</b> ho na YouTube uzavře a další spuštění založí nový.</p>
         </div>
-        <p class="hint small" id="keyHint">Visí-li YouTube Studio na „Preparing stream“, zkuste <b>Restartovat vysílání</b>.</p>
       </div>
-    </div>
-
-    <div class="card">
+      <p class="hint small" id="keyHint">Visí-li YouTube Studio na „Preparing stream“, zkuste <b>Restartovat vysílání</b>.</p>
       <h2>Log</h2>
       <pre id="log" class="log"></pre>
-    </div>
+    </details>
   </section>
 
   <!-- ============================================================ ZÁPIS / UTKÁNÍ (krok 3) -->
@@ -517,6 +542,7 @@
           <label class="narrow">Bodů za vyšší součet týmu <input name="pravidla.bodyZaCelkem" type="number" step="0.5" min="0"></label>
         </div>
         <label class="check"><input type="checkbox" name="pravidla.remizaSoubojeRozhodujeKuzelky"> Při rovnosti setových bodů rozhoduje souboj vyšší počet kuželek</label>
+        <label class="check"><input type="checkbox" name="pravidla.soubojRozhodujiKuzelky"> Souboj rozhoduje jen součet kuželek (národní 16bodové hodnocení – krajské soutěže)</label>
         <label class="check"><input type="checkbox" name="pravidla.podrobnyZapis"> Podrobný zápis: u každého úseku plné, dorážka a chyby (jako oficiální zápis ČKA)</label>
         <div class="row">
           <label>Rozpis drah <select id="lanePreset">
@@ -577,7 +603,7 @@
         <li>Vedle hodin se objeví ikona kuželky: <b>šedá</b> = nevysílá se, <b>červená</b> = vysílá se,
           <b>oranžová</b> = obnovuje se spojení nebo je kamera nedostupná. Levé kliknutí otevře ovládání,
           pravé kliknutí → <i>Ukončit</i>.</li>
-        <li><b>Nový počítač:</b> na záložce Vysílání klikněte na <b>Přihlásit Google účet oddílu</b>. Nastavení
+        <li><b>Nový počítač:</b> na záložce Přenos klikněte na <b>Přihlásit Google účet oddílu</b>. Nastavení
           kamery, YouTube kanál, grafika, pravidla i uložená utkání se pak načtou samy z Google Disku oddílu.
           Nic dalšího se nevyplňuje.</li>
         <li><b>Aktualizace jsou automatické:</b> při každém spuštění si aplikace zkontroluje novou verzi, sama se
@@ -591,23 +617,20 @@
     <div class="card" id="h-utkani">
       <h2>2. Průběh utkání</h2>
       <ol>
-        <li><b>Založte utkání</b> na záložce <a href="#utkani" data-goto="utkani">Utkání</a> – <b>ještě před spuštěním
-          vysílání</b>, aby se podle něj pojmenoval přenos na YouTube.
-          <ul>
-            <li><b>Nejjednodušší:</b> vložte odkaz na zápas z
-              <a href="https://vysledky.kuzelky.cz" target="_blank" rel="noopener">vysledky.kuzelky.cz</a> a klikněte
-              <b>Založit utkání z odkazu</b>. Sestavy, střídání a výsledky se pak načítají samy z oficiálního zápisu,
-              který domácí oddíl během utkání vyplňuje. Nic se nemusí zapisovat dvakrát.</li>
-            <li><b>Ručně:</b> vyplňte družstva a hráče (pořadí řádků = pořadí soubojů) → Založit utkání.
-              Známá družstva se nabízejí a jejich hráči se doplní sami.</li>
-          </ul></li>
-        <li><b>Spusťte vysílání</b> na záložce <a href="#vysilani" data-goto="vysilani">Vysílání</a>. V kartě
-          „Přenos na YouTube“ je odkaz pro diváky (tlačítko Kopírovat odkaz). Do minuty by měl být stav <b>● ŽIVĚ</b>.</li>
+        <li>Na stránce <a href="https://vysledky.kuzelky.cz" target="_blank" rel="noopener">vysledky.kuzelky.cz</a>
+          otevřete dnešní zápas a zkopírujte adresu z adresního řádku prohlížeče (Ctrl+L, Ctrl+C).</li>
+        <li>Na záložce <a href="#vysilani" data-goto="vysilani">Přenos</a> ji vložte do políčka
+          <b>Odkaz na zápas z výsledků ČKA</b> (Ctrl+V). Tlačítko <b>Otevřít stránku</b> vedle políčka stránku
+          zápasu otevře pro kontrolu.</li>
+        <li>Klikněte na <b>▶ Začít přenos zápasu</b>. Aplikace načte sestavy a výsledky, nastaví si podle zápasu
+          pravidla (1. KLM 120 hodů / krajský přebor 100 hodů, 8 nebo 16 bodů) a spustí vysílání. Odkaz pro diváky
+          je hned pod tlačítkem (Kopírovat odkaz). Výsledky se pak během utkání načítají samy.</li>
         <li>Během utkání zapisujte výsledky (pokud se nenačítají z webu) – viz <a href="#h-zapis">Zápis</a>.</li>
-        <li><b>Přerušení</b> (porucha dráhy apod.): na Vysílání tlačítko <b>⏸ Přerušit utkání</b>. Grafika ukáže
+        <li><b>Přerušení</b> (porucha dráhy apod.): na Přenosu tlačítko <b>⏸ Přerušit utkání</b>. Grafika ukáže
           celou tabulku s nápisem „Utkání přerušeno“. Tlačítko <b>▶ Pokračovat v utkání</b> vrátí grafiku, jak byla.</li>
-        <li><b>Po utkání:</b> Vysílání → <b>Ukončit přenos utkání</b>. Video na YouTube se uzavře jako záznam.
-          Pouhé „Zastavit vysílání“ přenos neukončí – po novém spuštění pokračuje na stejné adrese.</li>
+        <li><b>Po utkání:</b> <b>■ Ukončit přenos zápasu</b>. Vysílání skončí a video zůstane na YouTube jako záznam.</li>
+        <li>Ruční zápis, grafika a nastavení jsou na dalších záložkách, které se ukážou tlačítkem <b>Pokročilé</b>
+          vpravo nahoře.</li>
       </ol>
     </div>
 
@@ -647,8 +670,8 @@
       <h2>5. Když něco nejde</h2>
       <ul>
         <li><b>Kamera vypadne:</b> divák vidí „Přenos z kamery bude za chvíli obnoven“ i se skóre. Aplikace se ke
-          kameře připojí sama. Ručně: Vysílání → Znovu připojit kameru.</li>
-        <li><b>YouTube nevysílá nebo se zasekl:</b> Vysílání → Restartovat vysílání.</li>
+          kameře připojí sama. Ručně: Přenos → Podrobnosti pro správce → Znovu připojit kameru.</li>
+        <li><b>YouTube nevysílá nebo se zasekl:</b> Přenos → Podrobnosti pro správce → Restartovat vysílání.</li>
         <li><b>„Přihlášení ke Google účtu vypršelo“:</b> Nastavení → YouTube → Přihlásit k YouTube.</li>
         <li><b>Webkamera ukazuje šedý obrázek se zámkem:</b> kameru blokuje clonka, klávesa pro vypnutí kamery
           nebo program výrobce notebooku (např. Lenovo Vantage – režim soukromí kamery).</li>
@@ -700,5 +723,6 @@
 <script src="app.js"></script>
 <script src="match.js"></script>
 <script src="editor.js"></script>
+<script src="simple.js"></script>
 </body>
 </html>

@@ -1,0 +1,404 @@
+{
+ "id": 3908,
+ "slug": "krajsky-prebor-1-tridy-2026-2027-kolo-11-tj-sparta-kutna-hora-b-muzi-tj-lhotka-a-muzi",
+ "date": "2026-11-26",
+ "time": "18:00",
+ "round": 11,
+ "status": "IN_PROGRESS",
+ "matchType": "TEAMS_OF_6",
+ "discipline": "T100",
+ "videoUrl": "https://www.youtube.com/watch?v=TA7XfoPyE5c",
+ "homeTeam": {
+  "name": "TJ Sparta Kutná Hora B"
+ },
+ "awayTeam": {
+  "name": "TJ Lhotka A"
+ },
+ "competition": {
+  "id": 58,
+  "slug": "krajsky-prebor-1-tridy-2026-2027",
+  "name": "Středočeský krajský přebor 1. třídy",
+  "priority": 50,
+  "category": "REGION_COMPETITION",
+  "periodType": "LONG_TERM",
+  "playerType": "TEAMS_OF_6"
+ },
+ "results": [
+  {
+   "isHome": true,
+   "teamPoints": 3,
+   "totalPerformance": 1524,
+   "totalFull": 1047,
+   "totalSpare": 477,
+   "totalErrors": 30,
+   "totalSetPoints": 3.5,
+   "playerResults": [
+    {
+     "position": 1,
+     "teamPoints": 0,
+     "setPoints": 0,
+     "totalFull": 307,
+     "totalSpare": 124,
+     "totalErrors": 7,
+     "totalPerformance": 431,
+     "isAnnulled": false,
+     "player": {
+      "id": 133,
+      "firstName": "Tomáš",
+      "lastName": "Jelínek",
+      "ageAttribute": null,
+      "slug": "tomas-jelinek"
+     },
+     "laneResults": [
+      {
+       "laneNumber": 1,
+       "full": 146,
+       "spare": 62,
+       "errors": 4,
+       "total": 208,
+       "setPoints": 0
+      },
+      {
+       "laneNumber": 2,
+       "full": 161,
+       "spare": 62,
+       "errors": 3,
+       "total": 223,
+       "setPoints": 0
+      }
+     ]
+    },
+    {
+     "position": 2,
+     "teamPoints": 0,
+     "setPoints": 0.5,
+     "totalFull": 296,
+     "totalSpare": 151,
+     "totalErrors": 7,
+     "totalPerformance": 447,
+     "isAnnulled": false,
+     "player": {
+      "id": 5298,
+      "firstName": "Vojtěch",
+      "lastName": "Kaucner",
+      "ageAttribute": null,
+      "slug": "vojtech-kaucner"
+     },
+     "laneResults": [
+      {
+       "laneNumber": 1,
+       "full": 151,
+       "spare": 90,
+       "errors": 3,
+       "total": 241,
+       "setPoints": 0
+      },
+      {
+       "laneNumber": 2,
+       "full": 145,
+       "spare": 61,
+       "errors": 4,
+       "total": 206,
+       "setPoints": 0.5
+      }
+     ]
+    },
+    {
+     "position": 3,
+     "teamPoints": 1,
+     "setPoints": 2,
+     "totalFull": 304,
+     "totalSpare": 122,
+     "totalErrors": 13,
+     "totalPerformance": 426,
+     "isAnnulled": false,
+     "player": {
+      "id": 130,
+      "firstName": "Petr",
+      "lastName": "Dus",
+      "ageAttribute": null,
+      "slug": "petr-dus"
+     },
+     "laneResults": [
+      {
+       "laneNumber": 1,
+       "full": 149,
+       "spare": 53,
+       "errors": 5,
+       "total": 202,
+       "setPoints": 1
+      },
+      {
+       "laneNumber": 2,
+       "full": 155,
+       "spare": 69,
+       "errors": 8,
+       "total": 224,
+       "setPoints": 1
+      }
+     ]
+    },
+    {
+     "position": 4,
+     "teamPoints": null,
+     "setPoints": 1,
+     "totalFull": 140,
+     "totalSpare": 80,
+     "totalErrors": 3,
+     "totalPerformance": 220,
+     "isAnnulled": false,
+     "player": {
+      "id": 138,
+      "firstName": "František",
+      "lastName": "Tesař",
+      "ageAttribute": null,
+      "slug": "frantisek-tesar"
+     },
+     "laneResults": [
+      {
+       "laneNumber": 1,
+       "full": 140,
+       "spare": 80,
+       "errors": 3,
+       "total": 220,
+       "setPoints": 1
+      }
+     ]
+    },
+    {
+     "position": 5,
+     "teamPoints": null,
+     "setPoints": null,
+     "totalFull": 0,
+     "totalSpare": 0,
+     "totalErrors": 0,
+     "totalPerformance": 0,
+     "isAnnulled": false,
+     "player": {
+      "id": 132,
+      "firstName": "Jiří",
+      "lastName": "Halfar",
+      "ageAttribute": null,
+      "slug": "jiri-halfar"
+     },
+     "laneResults": []
+    },
+    {
+     "position": 6,
+     "teamPoints": null,
+     "setPoints": null,
+     "totalFull": 0,
+     "totalSpare": 0,
+     "totalErrors": 0,
+     "totalPerformance": 0,
+     "isAnnulled": false,
+     "player": {
+      "id": 2054,
+      "firstName": "Bohumír",
+      "lastName": "Kopecký",
+      "ageAttribute": null,
+      "slug": "bohumir-kopecky"
+     },
+     "laneResults": []
+    }
+   ],
+   "substitutions": [],
+   "leader": {
+    "id": 132,
+    "firstName": "Jiří",
+    "lastName": "Halfar",
+    "ageAttribute": null,
+    "slug": "jiri-halfar"
+   },
+   "invalidStarts": []
+  },
+  {
+   "isHome": false,
+   "teamPoints": 2,
+   "totalPerformance": 1491,
+   "totalFull": 1030,
+   "totalSpare": 461,
+   "totalErrors": 28,
+   "totalSetPoints": 3.5,
+   "playerResults": [
+    {
+     "position": 1,
+     "teamPoints": 1,
+     "setPoints": 2,
+     "totalFull": 301,
+     "totalSpare": 161,
+     "totalErrors": 2,
+     "totalPerformance": 462,
+     "isAnnulled": false,
+     "player": {
+      "id": 4821,
+      "firstName": "Josef",
+      "lastName": "Hejduk",
+      "ageAttribute": null,
+      "slug": "josef-hejduk"
+     },
+     "laneResults": [
+      {
+       "laneNumber": 1,
+       "full": 158,
+       "spare": 72,
+       "errors": 2,
+       "total": 230,
+       "setPoints": 1
+      },
+      {
+       "laneNumber": 2,
+       "full": 143,
+       "spare": 89,
+       "errors": 0,
+       "total": 232,
+       "setPoints": 1
+      }
+     ]
+    },
+    {
+     "position": 2,
+     "teamPoints": 1,
+     "setPoints": 1.5,
+     "totalFull": 314,
+     "totalSpare": 149,
+     "totalErrors": 6,
+     "totalPerformance": 463,
+     "isAnnulled": false,
+     "player": {
+      "id": 3214,
+      "firstName": "Barbora",
+      "lastName": "Fajrajzlová",
+      "ageAttribute": null,
+      "slug": "barbora-fajrajzlova"
+     },
+     "laneResults": [
+      {
+       "laneNumber": 1,
+       "full": 170,
+       "spare": 87,
+       "errors": 1,
+       "total": 257,
+       "setPoints": 1
+      },
+      {
+       "laneNumber": 2,
+       "full": 144,
+       "spare": 62,
+       "errors": 5,
+       "total": 206,
+       "setPoints": 0.5
+      }
+     ]
+    },
+    {
+     "position": 3,
+     "teamPoints": 0,
+     "setPoints": 0,
+     "totalFull": 275,
+     "totalSpare": 88,
+     "totalErrors": 18,
+     "totalPerformance": 363,
+     "isAnnulled": false,
+     "player": {
+      "id": 100,
+      "firstName": "Pavel",
+      "lastName": "Nový",
+      "ageAttribute": null,
+      "slug": "pavel-novy"
+     },
+     "laneResults": [
+      {
+       "laneNumber": 1,
+       "full": 144,
+       "spare": 44,
+       "errors": 11,
+       "total": 188,
+       "setPoints": 0
+      },
+      {
+       "laneNumber": 2,
+       "full": 131,
+       "spare": 44,
+       "errors": 7,
+       "total": 175,
+       "setPoints": 0
+      }
+     ]
+    },
+    {
+     "position": 4,
+     "teamPoints": null,
+     "setPoints": 0,
+     "totalFull": 140,
+     "totalSpare": 63,
+     "totalErrors": 2,
+     "totalPerformance": 203,
+     "isAnnulled": false,
+     "player": {
+      "id": 3060,
+      "firstName": "Jakub",
+      "lastName": "Nový",
+      "ageAttribute": null,
+      "slug": "jakub-novy"
+     },
+     "laneResults": [
+      {
+       "laneNumber": 1,
+       "full": 140,
+       "spare": 63,
+       "errors": 2,
+       "total": 203,
+       "setPoints": 0
+      }
+     ]
+    },
+    {
+     "position": 5,
+     "teamPoints": null,
+     "setPoints": null,
+     "totalFull": 0,
+     "totalSpare": 0,
+     "totalErrors": 0,
+     "totalPerformance": 0,
+     "isAnnulled": false,
+     "player": {
+      "id": 3955,
+      "firstName": "Dušan",
+      "lastName": "Hejduk",
+      "ageAttribute": null,
+      "slug": "dusan-hejduk-2"
+     },
+     "laneResults": []
+    },
+    {
+     "position": 6,
+     "teamPoints": null,
+     "setPoints": null,
+     "totalFull": 0,
+     "totalSpare": 0,
+     "totalErrors": 0,
+     "totalPerformance": 0,
+     "isAnnulled": false,
+     "player": {
+      "id": 98,
+      "firstName": "Dušan",
+      "lastName": "Hejduk",
+      "ageAttribute": null,
+      "slug": "dusan-hejduk"
+     },
+     "laneResults": []
+    }
+   ],
+   "substitutions": [],
+   "leader": {
+    "id": 3955,
+    "firstName": "Dušan",
+    "lastName": "Hejduk",
+    "ageAttribute": null,
+    "slug": "dusan-hejduk-2"
+   },
+   "invalidStarts": []
+  }
+ ]
+}

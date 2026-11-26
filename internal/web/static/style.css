@@ -273,3 +273,29 @@ label > .tag, label > .muted { align-self: flex-start; margin-left: 0; }
 }
 .ok-text { color: var(--ok); }
 .bad-text { color: var(--bad); }
+
+/* ---- simple main screen */
+.simple { display: flex; flex-direction: column; gap: 12px; }
+.simple-label { font-size: 18px; font-weight: 700; display: block; }
+.simple-url { display: flex; gap: 10px; flex-wrap: wrap; }
+.simple-url input { flex: 1 1 420px; font-size: 17px; padding: 12px 14px; border: 2px solid var(--border);
+  border-radius: var(--radius); background: var(--panel); }
+.simple-url input:focus { border-color: var(--accent); outline: none; }
+a.button { display: inline-flex; align-items: center; padding: 12px 18px; border: 1px solid var(--border);
+  border-radius: var(--radius); background: var(--panel); color: var(--accent); text-decoration: none; font-weight: 600; }
+a.button:hover { border-color: var(--accent); }
+.simple-match { font-size: 17px; display: flex; gap: 14px; align-items: baseline; flex-wrap: wrap; }
+.simple-match .score { font-size: 22px; font-weight: 800; background: #e6b41e; color: #0c1630; padding: 2px 12px; border-radius: 8px; }
+.simple-actions { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
+button.huge { font-size: 22px; padding: 18px 34px; font-weight: 700; border-radius: 12px; }
+.simple-msg { font-size: 16px; padding: 10px 14px; border-radius: var(--radius); background: var(--tag-live); color: var(--tag-text); }
+.simple-msg.bad { background: var(--tag-all); }
+.simple-yt { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; font-size: 17px; }
+.simple-yt a { font-weight: 700; color: var(--accent); word-break: break-all; }
+.live-text { color: var(--bad); font-weight: 700; }
+details.advanced > summary { cursor: pointer; font-weight: 600; color: var(--muted); }
+details.advanced[open] > summary { margin-bottom: 12px; }
+.grid3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; margin: 12px 0; }
+/* the tabs for advanced users appear with "Pokročilé" */
+body:not(.adv-on) .tabs .adv { display: none; }
+.tabs .adv-toggle { background: none; border: 1px dashed var(--border); color: var(--muted); font-size: 13px; }

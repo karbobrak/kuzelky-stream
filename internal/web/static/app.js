@@ -90,6 +90,7 @@ async function refreshStatus() {
   $("slateBadge").hidden = !(running && s.nahradniObraz);
   if (!running) { $("preview").hidden = true; $("previewEmpty").hidden = false; }
   renderYouTube(s);
+  if (window.renderSimple) window.renderSimple(s);
 }
 
 const LIFE_TEXT = {

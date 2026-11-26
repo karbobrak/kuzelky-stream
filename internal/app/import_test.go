@@ -72,3 +72,22 @@ func TestImportApply(t *testing.T) {
 		t.Fatal("import changed a different match")
 	}
 }
+
+// Following a 100 hs match switches the rules to 2 segments and gives the score of the web (0:4).
+func TestImportSwitchesRules(t *testing.T) {
+	a := newTestApp(t)
+	const url = "https://vysledky.kuzelky.cz/detail-zapasu/krajsky-prebor-1-tridy-2026-2027-kolo-11-tj-sparta-kutna-hora-b-muzi-tj-lhotka-a-muzi"
+	if err := a.SetResultsSource(url, false); err != nil {
+		t.Fatal(err)
+	}
+	if err := a.importApply(loadCka(t, "t100_16bodu.json"), url); err != nil {
+		t.Fatal(err)
+	}
+	v := a.MatchView()
+	if v.Rules.Lanes != 2 || v.Rules.Throws() != 50 || v.Result.HomePts != 0 || v.Result.AwayPts != 4 {
+		t.Fatalf("rules %+v score %v:%v", v.Rules, v.Result.HomePts, v.Result.AwayPts)
+	}
+	if a.Config().Rules.Lanes != 2 {
+		t.Fatal("rules not saved")
+	}
+}

@@ -108,7 +108,7 @@ func Compute(m Match, r Rules) Result {
 		dr.Finished = len(d.Lanes) > 0 && dr.LanesDone == len(d.Lanes)
 		if dr.Finished {
 			h, a := dr.HomeSets, dr.AwaySets
-			if h == a && r.DuelTieByPins {
+			if r.DuelByPins || (h == a && r.DuelTieByPins) {
 				h, a = float64(dr.HomeSum), float64(dr.AwaySum)
 			}
 			dr.HomePts, dr.AwayPts = split(h, a, r.DuelPoint)
@@ -136,8 +136,10 @@ func Compute(m Match, r Rules) Result {
 			res.PartsDone++
 		}
 	}
-	if allDone {
-		res.Finished = true
+	// The points for the higher team total are shown during the match too (provisionally, as on
+	// vysledky.kuzelky.cz), once any pins are entered; they are final when all duels are finished.
+	res.Finished = allDone
+	if allDone || res.HomePins+res.AwayPins > 0 {
 		h, a := split(float64(res.HomePins), float64(res.AwayPins), r.TotalPinsPoints)
 		res.HomePts += h
 		res.AwayPts += a
