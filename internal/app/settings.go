@@ -70,6 +70,7 @@ func (a *App) downloadSettings(ctx context.Context, cl *google.Client, f google.
 	if err := json.Unmarshal(body, &shared); err != nil {
 		return fmt.Errorf("nastavení na Disku je poškozené: %w", err)
 	}
+	shared.Migrate()
 	local := a.Config()
 	nc := shared.WithLocal(local)
 	nc.Cloud.SettingsChanged = remoteTime(f).UnixMilli()

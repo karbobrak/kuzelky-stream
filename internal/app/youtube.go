@@ -49,15 +49,78 @@ func (a *App) loadSavedBroadcast() string {
 	return s.ID
 }
 
-func (a *App) saveBroadcast(b *google.Broadcast) {
+func (a *App) saveBroadcast(b *google.Broadcast) { a.saveBroadcastKind(b, "") }
+
+func (a *App) saveBroadcastKind(b *google.Broadcast, kind string) {
 	id := ""
 	if b != nil {
 		id = b.ID
+	} else {
+		kind = ""
 	}
 	_ = os.Remove(a.prenosPath()) // migrated into the settings
-	if a.Config().YouTube.BroadcastID != id {
-		a.updateConfig(func(c *config.Config) { c.YouTube.BroadcastID = id })
+	y := a.Config().YouTube
+	if y.BroadcastID != id || (kind != "" && y.BroadcastKind != kind) || (id == "" && y.BroadcastKind != "") {
+		a.updateConfig(func(c *config.Config) {
+			c.YouTube.BroadcastID = id
+			if kind != "" || id == "" {
+				c.YouTube.BroadcastKind = kind
+			}
+		})
 	}
+}
+
+// Broadcast kinds.
+const (
+	KindMatch   = "zapas"
+	KindNonstop = "nonstop"
+)
+
+// desiredKind: with nonstop broadcasting a match broadcast runs only while a match is open;
+// without it every broadcast is a match broadcast (the original behaviour).
+func (a *App) desiredKind(cfg config.Config) string {
+	if !cfg.YouTube.Nonstop {
+		return KindMatch
+	}
+	a.mt.mu.Lock()
+	open := a.mt.cur != nil
+	a.mt.mu.Unlock()
+	if open {
+		return KindMatch
+	}
+	return KindNonstop
+}
+
+func (a *App) broadcastTitle(cfg config.Config, kind string) string {
+	if kind == KindNonstop {
+		t := cfg.YouTube.NonstopTitle
+		if strings.TrimSpace(t) == "" {
+			t = cfg.YouTube.ChannelTitle
+		}
+		if strings.TrimSpace(t) == "" {
+			t = "Kuželky – živě"
+		}
+		return expandTitle(t, time.Now(), a.matchTitleFields())
+	}
+	return expandTitle(cfg.YouTube.Title, time.Now(), a.matchTitleFields())
+}
+
+// endOnYouTube completes a broadcast that is live (it becomes a video); one that never went live
+// stays in Studio as upcoming.
+func (a *App) endOnYouTube(ctx context.Context, cl *google.Client, id string) error {
+	cur, err := cl.GetBroadcast(ctx, id)
+	if err != nil || cur == nil || cur.Ended() {
+		return err
+	}
+	if cur.LifeCycle != "live" {
+		a.Log.Printf("YouTube: přenos „%s“ nebyl živě (stav %s) – ponechávám ho ve Studiu", cur.Title, cur.LifeCycle)
+		return nil
+	}
+	if err := cl.Transition(ctx, id, "complete"); err != nil {
+		return fmt.Errorf("YouTube: přenos nelze ukončit: %w", err)
+	}
+	a.Log.Printf("YouTube: přenos „%s“ ukončen (zůstane jako video)", cur.Title)
+	return nil
 }
 
 func ytClient(y config.YouTube) *google.Client {
@@ -104,6 +167,7 @@ func (a *App) prepareYouTube(ctx context.Context, cfg config.Config) error {
 		a.updateYouTubeConfig(func(y *config.YouTube) { y.StreamID = st.ID })
 	}
 
+	kind := a.desiredKind(cfg)
 	var b *google.Broadcast
 	if id := a.loadSavedBroadcast(); id != "" {
 		if b, err = cl.GetBroadcast(ctx, id); err != nil {
@@ -112,9 +176,20 @@ func (a *App) prepareYouTube(ctx context.Context, cfg config.Config) error {
 		if b != nil && b.Ended() {
 			b = nil
 		}
+		savedKind := cfg.YouTube.BroadcastKind
+		if savedKind == "" {
+			savedKind = KindMatch
+		}
+		if b != nil && savedKind != kind {
+			// Match ↔ alley: end the current broadcast (a video), the stream itself goes on.
+			if err := a.endOnYouTube(ctx, cl, b.ID); err != nil {
+				return err
+			}
+			b = nil
+		}
 	}
 	if b == nil {
-		nb, err := cl.CreateBroadcast(ctx, expandTitle(cfg.YouTube.Title, time.Now(), a.matchTitleFields()), cfg.YouTube.Privacy)
+		nb, err := cl.CreateBroadcast(ctx, a.broadcastTitle(cfg, kind), cfg.YouTube.Privacy)
 		if err != nil {
 			return fmt.Errorf("YouTube: nelze založit přenos: %w", err)
 		}
@@ -127,7 +202,7 @@ func (a *App) prepareYouTube(ctx context.Context, cfg config.Config) error {
 	if err := cl.Bind(ctx, b.ID, st.ID); err != nil {
 		return fmt.Errorf("YouTube: nelze propojit přenos se streamem: %w", err)
 	}
-	a.saveBroadcast(b)
+	a.saveBroadcastKind(b, kind)
 	a.yt.mu.Lock()
 	a.yt.broadcast, a.yt.ingest, a.yt.lastErr, a.yt.activeFor = b, st, "", 0
 	a.yt.mu.Unlock()
@@ -222,6 +297,57 @@ func (a *App) pollYouTube(ctx context.Context, cfg config.Config) {
 		for _, issue := range h.Issues {
 			a.Log.Printf("YouTube hlásí: %s", issue)
 		}
+	}
+}
+
+// StartMatchBroadcast starts broadcasting the open match: starts streaming, or – when the alley
+// is already being broadcast nonstop – ends that broadcast and switches to a new one for the match
+// (own link and video). The stream to YouTube itself is not interrupted.
+func (a *App) StartMatchBroadcast(ctx context.Context) error {
+	if !a.Running() {
+		return a.Start()
+	}
+	cfg := a.Config()
+	if cfg.YouTube.Mode != "api" || cfg.Output.Target != "youtube" {
+		return nil
+	}
+	if cfg.YouTube.BroadcastKind == KindMatch && a.desiredKind(cfg) == KindMatch {
+		return nil // already the match broadcast
+	}
+	return a.prepareYouTube(ctx, cfg)
+}
+
+// EndMatchBroadcast ends the match: its broadcast becomes a video, the score disappears and,
+// with nonstop broadcasting, the alley goes on as a new broadcast. Without nonstop the streaming
+// stops (as EndBroadcast).
+func (a *App) EndMatchBroadcast(ctx context.Context) error {
+	cfg := a.Config()
+	a.CloseMatch()
+	if !cfg.YouTube.Nonstop || cfg.YouTube.Mode != "api" || cfg.Output.Target != "youtube" {
+		return a.EndBroadcast(ctx)
+	}
+	if a.Running() {
+		return a.prepareYouTube(ctx, a.Config()) // ends the match broadcast, starts the alley one
+	}
+	// Not streaming: just end the match broadcast; the next start is the alley.
+	if id := a.loadSavedBroadcast(); id != "" && cfg.YouTube.APIReady() {
+		if err := a.endOnYouTube(ctx, ytClient(cfg.YouTube), id); err != nil {
+			return err
+		}
+	}
+	a.saveBroadcast(nil)
+	return nil
+}
+
+// AutoStart begins broadcasting when the app starts, if nonstop broadcasting is on and ready.
+func (a *App) AutoStart() {
+	cfg := a.Config()
+	if !cfg.YouTube.Nonstop || cfg.YouTube.Mode != "api" || !cfg.YouTube.APIReady() || cfg.Output.Target != "youtube" || a.Running() {
+		return
+	}
+	a.Log.Print("nonstop vysílání: spouštím automaticky")
+	if err := a.Start(); err != nil {
+		a.Log.Printf("nonstop vysílání se nespustilo: %v", err)
 	}
 }
 
@@ -399,11 +525,14 @@ type YTStatus struct {
 	Health      string   `json:"zdravi,omitempty"`
 	Issues      []string `json:"problemy,omitempty"`
 	Error       string   `json:"chyba,omitempty"`
+	Kind        string   `json:"druh,omitempty"` // zapas | nonstop
+	Nonstop     bool     `json:"nonstop"`
 }
 
 func (a *App) ytStatus() YTStatus {
 	cfg := a.Config()
-	s := YTStatus{Mode: cfg.YouTube.Mode, SignedIn: cfg.YouTube.APIReady(), Channel: cfg.YouTube.ChannelTitle}
+	s := YTStatus{Mode: cfg.YouTube.Mode, SignedIn: cfg.YouTube.APIReady(), Channel: cfg.YouTube.ChannelTitle,
+		Kind: cfg.YouTube.BroadcastKind, Nonstop: cfg.YouTube.Nonstop}
 	if cfg.YouTube.ChannelID != "" {
 		s.ChannelLive = "https://www.youtube.com/channel/" + cfg.YouTube.ChannelID + "/live"
 	}
@@ -413,9 +542,8 @@ func (a *App) ytStatus() YTStatus {
 		s.Title, s.WatchURL, s.LifeCycle, s.Privacy = b.Title, b.WatchURL(), b.LifeCycle, b.Privacy
 	} else if cfg.YouTube.Mode == "api" {
 		// Not streaming now, but a broadcast from earlier continues on the next start.
-		var sb savedBroadcast
-		if data, err := os.ReadFile(a.prenosPath()); err == nil && json.Unmarshal(data, &sb) == nil && sb.ID != "" {
-			s.Title, s.WatchURL = sb.Title, (google.Broadcast{ID: sb.ID}).WatchURL()
+		if id := cfg.YouTube.BroadcastID; id != "" {
+			s.WatchURL = (google.Broadcast{ID: id}).WatchURL()
 		}
 	}
 	s.StreamState, s.Health, s.Issues, s.Error = a.yt.health.Status, a.yt.health.Health, a.yt.health.Issues, a.yt.lastErr

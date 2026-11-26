@@ -136,6 +136,7 @@ func main() {
 			logger.Printf("webový server: %v", err)
 		}
 	}()
+	go a.AutoStart() // nonstop broadcasting: the alley goes on air as soon as the app starts
 	openUI := func() { _ = win.OpenBrowser(url) }
 
 	// Ctrl+C (console build) or Windows logoff/shutdown: stop cleanly so YouTube gets a proper end.

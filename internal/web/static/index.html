@@ -49,12 +49,14 @@
 
       <div class="simple-actions">
         <button type="button" id="btnGo" class="huge primary">▶ Začít přenos zápasu</button>
-        <button type="button" id="btnEnd" class="huge danger" hidden>■ Ukončit přenos zápasu</button>
+        <button type="button" id="btnEnd" class="huge danger" hidden>■ Ukončit zápas</button>
+        <button type="button" id="btnAlley" class="big" hidden>▶ Vysílat kuželnu (bez zápasu)</button>
         <button id="btnInterrupt" class="big interrupt" hidden
           title="Grafika ukáže celou tabulku výsledků s nápisem Utkání přerušeno. Dalším kliknutím se vrátí, jak byla.">⏸ Přerušit utkání</button>
       </div>
       <div id="sMsg" class="simple-msg" hidden></div>
 
+      <div id="sOnAir" class="simple-onair" hidden></div>
       <div id="sYt" class="simple-yt" hidden>
         <span class="muted">Přenos na YouTube:</span>
         <a id="sYtLink" target="_blank" rel="noopener"></a>
@@ -425,7 +427,7 @@
             <button type="button" id="btnYtLogout">Odhlásit</button>
           </div>
           <div class="row">
-            <label>Název přenosu <span class="muted small">({datum}, {cas} se doplní)</span>
+            <label>Název přenosu zápasu <span class="muted small">({domaci}, {hoste}, {datum}, {cas}, {soutez}, {kolo} se doplní)</span>
               <input name="youtube.nazevPrenosu"></label>
             <label class="narrow">Viditelnost <select name="youtube.soukromi">
               <option value="public">Veřejné</option>
@@ -433,6 +435,8 @@
               <option value="private">Soukromé</option>
             </select></label>
           </div>
+          <label class="check"><input type="checkbox" name="youtube.nonstop"> Mezi zápasy vysílat kuželnu nonstop (bez skóre, jako samostatný přenos; každý zápas má vlastní přenos a video)</label>
+          <label>Název nonstop přenosu <input name="youtube.nazevNonstop" placeholder="TJ Sparta Kutná Hora"></label>
           <details>
             <summary class="small">Přístup k API (Google Cloud) – vyplňuje se jednou</summary>
             <div class="row">
@@ -628,7 +632,11 @@
         <li>Během utkání zapisujte výsledky (pokud se nenačítají z webu) – viz <a href="#h-zapis">Zápis</a>.</li>
         <li><b>Přerušení</b> (porucha dráhy apod.): na Přenosu tlačítko <b>⏸ Přerušit utkání</b>. Grafika ukáže
           celou tabulku s nápisem „Utkání přerušeno“. Tlačítko <b>▶ Pokračovat v utkání</b> vrátí grafiku, jak byla.</li>
-        <li><b>Po utkání:</b> <b>■ Ukončit přenos zápasu</b>. Vysílání skončí a video zůstane na YouTube jako záznam.</li>
+        <li><b>Po utkání:</b> <b>■ Ukončit zápas</b>. Přenos zápasu se na YouTube uloží jako samostatné video
+          (název = kdo hraje proti komu a datum), skóre zmizí a dál se vysílá kuželna.</li>
+        <li><b>Mezi zápasy</b> běží na YouTube nonstop vysílání kuželny bez skóre (název oddílu). Spustí se samo
+          se spuštěním aplikace; ručně tlačítkem <b>Vysílat kuželnu</b>. Každý zápas tak má vlastní odkaz a video.
+          Vypnout se dá v Nastavení → YouTube.</li>
         <li>Ruční zápis, grafika a nastavení jsou na dalších záložkách, které se ukážou tlačítkem <b>Pokročilé</b>
           vpravo nahoře.</li>
       </ol>

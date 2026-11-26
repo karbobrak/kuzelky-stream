@@ -166,6 +166,16 @@ func Serve(ln net.Listener, port int, a *app.App) error {
 	mux.HandleFunc("POST /api/zapas/nacist", func(w http.ResponseWriter, r *http.Request) {
 		matchReply(w, a.ImportNow(r.Context()))
 	})
+	mux.HandleFunc("POST /api/prenos/zapas", func(w http.ResponseWriter, r *http.Request) {
+		ctx, cancel := context.WithTimeout(r.Context(), 60*time.Second)
+		defer cancel()
+		reply(w, nil, a.StartMatchBroadcast(ctx))
+	})
+	mux.HandleFunc("POST /api/prenos/konec-zapasu", func(w http.ResponseWriter, r *http.Request) {
+		ctx, cancel := context.WithTimeout(r.Context(), 60*time.Second)
+		defer cancel()
+		reply(w, nil, a.EndMatchBroadcast(ctx))
+	})
 	mux.HandleFunc("POST /api/zapas/hrac", func(w http.ResponseWriter, r *http.Request) {
 		var pc app.PlayerChange
 		if err := decode(r, &pc); err != nil {

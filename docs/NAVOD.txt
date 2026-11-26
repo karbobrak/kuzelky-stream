@@ -15,7 +15,8 @@ Podrobný návod je přímo v aplikaci: záložka NÁPOVĚDA.
 PŘENOS ZÁPASU:
 - Na vysledky.kuzelky.cz otevřete dnešní zápas a zkopírujte adresu stránky.
 - V aplikaci ji vložte do políčka „Odkaz na zápas“ a klikněte „Začít přenos zápasu“.
-- Po zápase klikněte „Ukončit přenos zápasu“.
+- Po zápase klikněte „Ukončit zápas“ – video zápasu zůstane na YouTube, dál se vysílá kuželna.
+- Mezi zápasy se na YouTube vysílá kuželna nonstop (spustí se samo se spuštěním aplikace).
 
 Aplikace se při každém spuštění sama aktualizuje na nejnovější verzi.
 Nová kopie ke stažení: https://github.com/karbobrak/kuzelky-stream/releases/latest

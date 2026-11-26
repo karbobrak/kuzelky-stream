@@ -474,3 +474,8 @@ oblasti místo okna konzole, napojení na automaty (snímání čítačů), expo
   T100 = 2×50 …). Body za vyšší celkový součet se přičítají průběžně a souboj se počítá, jakmile mu web
   přidělí body – skóre tak odpovídá tomu, co ukazuje oficiální web (test TestScoreMatchesWeb).
   Šestnáctibodové hodnocení (čl. 18) je jen ruční volba; z živých bodů ho nelze spolehlivě poznat.
+- **Nonstop vysílání (1.7.0)**: `youtube.nonstop` (výchozí zapnuto). Mezi zápasy běží přenos kuželny
+  (`nazevNonstop`, výchozí „TJ Sparta Kutná Hora“), každý zápas má vlastní přenos (`nazevPrenosu`, výchozí
+  „{domaci} – {hoste} ({datum})“). Vysílání do streamu (stejný klíč) běží pořád; při Začít přenos zápasu /
+  Ukončit zápas se jen ukončí aktuální přenos (transition complete → video) a na stejný stream se naváže
+  nový (`prenosDruh` zapas | nonstop). Aplikace začne vysílat sama po spuštění. Test: TestNonstopSwitching.

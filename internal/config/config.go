@@ -75,9 +75,17 @@ type YouTube struct {
 	StreamID     string `json:"streamId"`
 	// The broadcast in progress (fixed address until it is ended), shared by all computers.
 	BroadcastID string `json:"prenosId,omitempty"`
+	// BroadcastKind of that broadcast: "zapas" (a match, with the score) or "nonstop" (the alley
+	// between matches).
+	BroadcastKind string `json:"prenosDruh,omitempty"`
 	// Broadcast defaults.
 	Privacy string `json:"soukromi"` // public | unlisted | private
 	Title   string `json:"nazevPrenosu"`
+	// Nonstop: between matches the alley is broadcast without the score as a separate broadcast;
+	// every match gets its own broadcast (own link and video). The app starts broadcasting by
+	// itself when it starts.
+	Nonstop      bool   `json:"nonstop"`
+	NonstopTitle string `json:"nazevNonstop"`
 }
 
 // APIReady reports whether API mode has everything it needs to stream.
@@ -199,10 +207,12 @@ func Default() Config {
 			Source:    "rtsp",
 		},
 		YouTube: YouTube{
-			Mode:    "api",
-			Server:  "rtmp://a.rtmp.youtube.com/live2",
-			Privacy: "unlisted",
-			Title:   "{utkani} ({datum})",
+			Mode:         "api",
+			Server:       "rtmp://a.rtmp.youtube.com/live2",
+			Privacy:      "unlisted",
+			Title:        DefaultMatchTitle,
+			Nonstop:      true,
+			NonstopTitle: "TJ Sparta Kutná Hora",
 		},
 		Output: Output{
 			Target:       "youtube",
@@ -228,6 +238,16 @@ var ErrCreated = errors.New("config file created with default values")
 
 // Load reads path. Missing fields keep their default values.
 // If the file does not exist, it writes defaults and returns ErrCreated.
+// DefaultMatchTitle: who plays whom and the date, e.g. "TJ Sparta Kutná Hora – TJ Lhotka A (26. 11. 2026)".
+const DefaultMatchTitle = "{domaci} – {hoste} ({datum})"
+
+// Migrate updates values that were defaults of older versions.
+func (c *Config) Migrate() {
+	if c.YouTube.Title == "{utkani} ({datum})" {
+		c.YouTube.Title = DefaultMatchTitle
+	}
+}
+
 func Load(path string) (Config, error) {
 	cfg := Default()
 	data, err := os.ReadFile(path)
@@ -243,6 +263,7 @@ func Load(path string) (Config, error) {
 	if err := json.Unmarshal(data, &cfg); err != nil {
 		return cfg, fmt.Errorf("%s: %w", path, err)
 	}
+	cfg.Migrate()
 	return cfg, cfg.Validate()
 }
 

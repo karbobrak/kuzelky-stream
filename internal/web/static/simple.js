@@ -51,14 +51,26 @@ async function refreshSimpleMatch() {
   box.hidden = false;
 }
 
+let lastStatus = null;
+
 // Called by app.js with every status (1× per second).
 window.renderSimple = function (s) {
+  lastStatus = s;
   const running = s.bezi;
-  $("btnGo").hidden = running;
-  $("btnEnd").hidden = !running;
-  $("sUrl").disabled = running;
-  if (!running && !s.preruseno) $("btnInterrupt").hidden = true; // only useful while broadcasting
   const y = s.youtube || {};
+  const nonstop = y.rezim === "api" && y.nonstop && s.cil === "youtube";
+  const matchOn = running && (!nonstop || y.druh === "zapas");
+  $("btnGo").hidden = matchOn;
+  $("btnEnd").hidden = !matchOn;
+  $("btnAlley").hidden = running || !nonstop;
+  $("sUrl").disabled = matchOn;
+  if (!running && !s.preruseno) $("btnInterrupt").hidden = true; // only useful while broadcasting
+
+  const onAir = $("sOnAir");
+  onAir.hidden = !running;
+  onAir.textContent = !running ? "" : matchOn ? "Na YouTube běží přenos zápasu." :
+    "Na YouTube běží nonstop vysílání kuželny (bez skóre). Před zápasem vložte odkaz a klikněte Začít přenos zápasu.";
+
   const link = y.odkaz || y.kanalLive || "";
   $("sYt").hidden = !link;
   $("sYtLink").href = link;
@@ -84,13 +96,13 @@ $("btnGo").onclick = async () => {
       } else if (!m.nacitatVysledky) {
         await api("POST", "/api/zapas/zdroj", { odkaz: u, automaticky: true });
       }
-    } else if (!m && !confirm("Není zadaný odkaz na zápas – vysílat jen obraz bez výsledků?")) {
-      return;
+    } else if (!m) {
+      throw new Error("Vložte odkaz na zápas z vysledky.kuzelky.cz.");
     }
     urlEdited = false;
-    simpleMsg("Spouštím vysílání…");
-    await api("POST", "/api/start", {});
-    simpleMsg("Vysílání běží. Na YouTube se objeví do minuty.");
+    simpleMsg("Zakládám přenos zápasu na YouTube…");
+    await api("POST", "/api/prenos/zapas", {});
+    simpleMsg("Přenos zápasu běží. Odkaz pro diváky je níže, na YouTube naskočí do minuty.");
   } catch (e) {
     simpleMsg(e.message, true);
   } finally {
@@ -102,16 +114,26 @@ $("btnGo").onclick = async () => {
 };
 
 $("btnEnd").onclick = async () => {
-  if (!confirm("Ukončit přenos zápasu?\n\nVysílání skončí a video zůstane na YouTube jako záznam.")) return;
+  const y = (lastStatus && lastStatus.youtube) || {};
+  const nonstop = y.rezim === "api" && y.nonstop;
+  if (!confirm(nonstop
+    ? "Ukončit zápas?\n\nPřenos zápasu se na YouTube uloží jako video, skóre zmizí a dál se bude vysílat kuželna."
+    : "Ukončit přenos zápasu?\n\nVysílání skončí a video zůstane na YouTube jako záznam.")) return;
   $("btnEnd").disabled = true;
   try {
-    const s = await api("GET", "/api/stav");
-    const y = s.youtube || {};
-    if (y.rezim === "api" && y.odkaz) await api("POST", "/api/youtube/ukoncit-prenos", {});
-    else await api("POST", "/api/stop", {});
-    simpleMsg("Přenos je ukončený.");
+    simpleMsg("Ukončuji přenos zápasu…");
+    await api("POST", "/api/prenos/konec-zapasu", {});
+    simpleMsg(nonstop ? "Zápas je ukončený, vysílá se kuželna." : "Přenos je ukončený.");
+    $("sUrl").value = ""; urlEdited = false; updateOpenLink();
   } catch (e) { simpleMsg(e.message, true); }
-  finally { $("btnEnd").disabled = false; refreshStatus(); }
+  finally { $("btnEnd").disabled = false; refreshStatus(); refreshSimpleMatch(); }
+};
+
+$("btnAlley").onclick = async () => {
+  $("btnAlley").disabled = true;
+  try { await api("POST", "/api/start", {}); simpleMsg("Vysílá se kuželna."); }
+  catch (e) { simpleMsg(e.message, true); }
+  finally { $("btnAlley").disabled = false; refreshStatus(); }
 };
 
 $("btnSCopy").onclick = async () => {

@@ -293,6 +293,7 @@ button.huge { font-size: 22px; padding: 18px 34px; font-weight: 700; border-radi
 .simple-yt { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; font-size: 17px; }
 .simple-yt a { font-weight: 700; color: var(--accent); word-break: break-all; }
 .live-text { color: var(--bad); font-weight: 700; }
+.simple-onair { font-size: 17px; font-weight: 600; }
 details.advanced > summary { cursor: pointer; font-weight: 600; color: var(--muted); }
 details.advanced[open] > summary { margin-bottom: 12px; }
 .grid3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; margin: 12px 0; }
